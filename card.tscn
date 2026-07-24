@@ -6,6 +6,7 @@
 [ext_resource type="FontFile" uid="uid://bhb2785lu3gra" path="res://Fonts/GoodPro/GoodPro-XCondBold.otf" id="4_1i5pp"]
 [ext_resource type="Theme" uid="uid://su6wy2tsssy2" path="res://theme.tres" id="5_pjytt"]
 [ext_resource type="FontFile" uid="uid://caf4146jspiok" path="res://Fonts/GoodPro/GoodPro-CondBold.otf" id="6_b4rk6"]
+[ext_resource type="Texture2D" uid="uid://ovswfjoqhq0m" path="res://Data/fire.tres" id="7_pjytt"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_6lcat"]
 thickness = 2
@@ -18,9 +19,10 @@ anchor_bottom = 0.312
 offset_right = 0.7199707
 offset_bottom = -1.4959717
 script = ExtResource("1_kikvd")
-card_name = "bracers of gravitational attraction"
-card_frequency = "once per day"
-condension = 2
+card_name = "LOREM IPSUM DOLOR SIT AMET"
+condension = 3
+card_description = "1d6  Takkura takes 1d8 persistent fire damage and 1d8 cold damage."
+card_heightened = Dictionary[String, String]({})
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1219346354]
 visible = false
@@ -102,7 +104,7 @@ clip_contents = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 1213.0
+offset_bottom = 1090.0
 grow_horizontal = 2
 theme_override_constants/margin_left = 48
 theme_override_constants/margin_top = 108
@@ -123,6 +125,7 @@ layout_mode = 2
 theme_override_colors/default_color = Color(0.6, 0.6, 0.6, 1)
 theme_override_fonts/normal_font = ExtResource("6_b4rk6")
 theme_override_font_sizes/normal_font_size = 33
+bbcode_enabled = true
 text = "AMET CONSECTETUR ADIPISCING ELIT"
 fit_content = true
 scroll_active = false
@@ -186,3 +189,10 @@ polygon = PackedVector2Array(0, 0, 0, 50, 50, 50, 50, 0)
 visible = false
 color = Color(1, 0, 1, 1)
 polygon = PackedVector2Array(710, 0, 710, 50, 660, 50, 660, 0)
+
+[node name="TestTrait" type="TextureRect" parent="." unique_id=391545564]
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("7_pjytt")

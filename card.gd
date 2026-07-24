@@ -132,10 +132,13 @@ enum CardType {
 	set(value):
 		card_description = value
 		_update_card_visuals()
-@export_multiline var card_heightened: String = """[b]Heightened (+1):[/b] The damage increases by 1d4 and the weakness on a critical failure increases by 1.""":
+@export var card_heightened: Dictionary[String, String] = {
+	"Heightened (+1)": """The damage increases by 1d4 and the weakness on a critical failure increases by 1."""
+}:
 	set(value):
 		card_heightened = value
 		_update_card_visuals()
+@export_multiline var test: Dictionary[String, String] = {"Heightened (+1)": "YEAG"}
 
 # Metadata
 var left_bound: float = 0.0
@@ -146,25 +149,6 @@ var point_of_slope: float = left_bound + space_to_slope + 59.0
 # Functions
 func _ready() -> void:
 	_update_card_visuals()
-	
-func sleep(t: float) -> void:
-	await get_tree().create_timer(t).timeout 
-
-func apply_rects(left: int, right: int) -> void:
-	var poly_left: Polygon2D = $LeftPoly
-	var poly_right: Polygon2D = $RightPoly
-	
-	var new_array_left: PackedVector2Array = poly_left.polygon
-	var new_array_right: PackedVector2Array = poly_right.polygon
-	
-	new_array_left[2].x = left
-	new_array_left[3].x = left
-	new_array_right[2].x = right
-	new_array_right[3].x = right
-	
-	poly_left.set("polygon", new_array_left)
-	poly_right.set("polygon", new_array_right)
-	
 
 func _recalculate_header_constants() -> void:
 	if not is_ready:
@@ -173,7 +157,22 @@ func _recalculate_header_constants() -> void:
 	await get_tree().process_frame
 	self.left_bound = label.get_rect().size.x + actions.get_rect().size.x + 38
 	self.right_bound = self.get_rect().size.x - category.get_rect().size.x - 48
-	apply_rects(self.left_bound, self.right_bound)
+	return
+	
+	# For testing:
+	var poly_left: Polygon2D = $LeftPoly
+	var poly_right: Polygon2D = $RightPoly
+	
+	var new_array_left: PackedVector2Array = poly_left.polygon
+	var new_array_right: PackedVector2Array = poly_right.polygon
+	
+	new_array_left[2].x = left_bound
+	new_array_left[3].x = left_bound
+	new_array_right[2].x = right_bound
+	new_array_right[3].x = right_bound
+	
+	poly_left.set("polygon", new_array_left)
+	poly_right.set("polygon", new_array_right)
 	
 
 func get_type_color() -> Color:
@@ -181,62 +180,7 @@ func get_type_color() -> Color:
 
 func _update_color() -> void:
 	$Margin.color = get_type_color()
-	
-func calculate_box_sizes_with_margins(
-	box_a: float, 
-	box_b: float, 
-	max_space: float, 
-	a_threshold: float, 
-	b_min: float,
-	margin_left: float,
-	margin_between: float,
-	margin_right: float
-) -> Dictionary:
-	
-	var total_margins: float = margin_left + margin_between + margin_right
-	var total_box_size: float = box_a + box_b
-	var total_size: float = total_box_size + total_margins
-	
-	# Step 1: If boxes AND margins fit perfectly within the original space, return.
-	if total_size <= max_space:
-		return _pack_result(box_a, box_b, box_a, box_b)
-		
-	# The excess is how much space we need to subtract from the boxes (margins are fixed)
-	var excess: float = total_size - max_space
-	
-	# Calculate how much Box A is allowed to shrink before hitting its threshold
-	var a_threshold_size: float = box_a * a_threshold
-	var a_max_initial_squeeze: float = max(0.0, box_a - a_threshold_size)
-	
-	# Step 2 & 3: Squeeze Box A until it fits, up to its threshold.
-	if excess <= a_max_initial_squeeze:
-		var new_a: float = box_a - excess
-		return _pack_result(new_a, box_b, box_a, box_b)
-		
-	# Step 4: Squeeze Box B as much as needed until its minimum length.
-	var remaining_excess: float = excess - a_max_initial_squeeze
-	var b_max_squeeze: float = max(0.0, box_b - b_min)
-	
-	# Step 5: If squeezing Box B was enough to fit, return.
-	if remaining_excess <= b_max_squeeze:
-		var new_b: float = box_b - remaining_excess
-		return _pack_result(a_threshold_size, new_b, box_a, box_b)
-		
-	# Step 6: Keep Box B squeezed at its minimum, and squeeze Box A as much as necessary.
-	remaining_excess -= b_max_squeeze
-	var final_a: float = a_threshold_size - remaining_excess
-	
-	return _pack_result(final_a, b_min, box_a, box_b)
 
-# Helper function to prevent division-by-zero when calculating scale
-func _pack_result(new_a: float, new_b: float, orig_a: float, orig_b: float) -> Dictionary:
-	return {
-		"size_a": new_a,
-		"scale_a": new_a / orig_a if orig_a != 0.0 else 1.0,
-		"size_b": new_b,
-		"scale_b": new_b / orig_b if orig_b != 0.0 else 1.0
-	}
-	
 func _update_header() -> void:
 	const inset_height: float = 50.0
 	const min_slope_x: float = 10.0
@@ -260,7 +204,7 @@ func _update_header() -> void:
 	# If still doesnt fit, squeeze Name text and slope
 	var left_margin: float = actions.get_rect().size.x + 38
 	var right_margin: float = category.get_rect().size.x + 58
-	var sizing: Dictionary = calculate_box_sizes_with_margins(
+	var sizing: Dictionary = Globals.calculate_box_sizes_with_margins(
 		label.get_rect().size.x,
 		50.0,
 		card_size.x,
@@ -317,9 +261,20 @@ func _update_parameters() -> void:
 		parameters_sep.hide()
 
 func _update_content() -> void:
+	$Content/VBoxContainer.scale.y = 1.0
+	description.add_theme_font_override("bold_font", fonts_bold[0])
+	description.add_theme_font_override("normal_font", fonts_regular[0])
+	heightened.add_theme_font_override("bold_font", fonts_bold[0])
+	heightened.add_theme_font_override("normal_font", fonts_regular[0])
+	
 	if card_traits:
 		card_traits.sort()
-		traits.text = "   ".join(card_traits).to_upper()
+		var card_traits_colored: Array[String] = []
+		for t in card_traits:
+			t = t.to_lower()
+			var color_code: String = Globals.trait_colors.get(t, "999999")
+			card_traits_colored.append("[color=#%s]"%color_code + t.to_upper() + "[/color]")
+		traits.text = "   ".join(card_traits_colored)
 		traits.show()
 		traits_sep.show()
 	else:
@@ -328,17 +283,66 @@ func _update_content() -> void:
 		
 	_update_parameters()
 	
-	description.text = card_description
-	description.add_theme_font_override("bold_font", fonts_bold[clampi(condension, 0, 3)])
-	description.add_theme_font_override("normal_font", fonts_regular[clampi(condension, 0, 3)])
+	var data: Dictionary = Globals.color_content_pro(card_description, Globals.trait_colors)
+	description.text = data["text"]
+	print(data["icons"])
+	#description.add_theme_font_override("bold_font", fonts_bold[clampi(condension, 0, 3)])
+	#description.add_theme_font_override("normal_font", fonts_regular[clampi(condension, 0, 3)])
 	
 	if card_heightened:
-		heightened.text = card_heightened
+		var heightened_array: Array[String] = []
+		for key in card_heightened.keys():
+			data = Globals.color_content_pro(card_heightened[key], Globals.trait_colors)
+			heightened_array.append("[b]" + key + ":[/b] " + data["text"])
+		heightened.text = "\n".join(heightened_array)
 		heightened.show()
 		heightened_sep.show()
 	else:
 		heightened.hide()
 		heightened_sep.hide()
+		
+	# Compress text if necessary.
+	await get_tree().process_frame
+	
+	var bottom_line: float = $Content/VBoxContainer/End.position.y
+	if bottom_line + 108.0 + 30.0 > size.y:
+		description.add_theme_font_override("bold_font", fonts_bold[1])
+		description.add_theme_font_override("normal_font", fonts_regular[1])
+		await get_tree().process_frame
+		bottom_line = $Content/VBoxContainer/End.position.y
+	if bottom_line + 108.0 + 30.0 > size.y:
+		heightened.add_theme_font_override("bold_font", fonts_bold[1])
+		heightened.add_theme_font_override("normal_font", fonts_regular[1])
+		await get_tree().process_frame
+		bottom_line = $Content/VBoxContainer/End.position.y
+	if bottom_line + 108.0 + 30.0 > size.y:
+		description.add_theme_font_override("bold_font", fonts_bold[2])
+		description.add_theme_font_override("normal_font", fonts_regular[2])
+		await get_tree().process_frame
+		bottom_line = $Content/VBoxContainer/End.position.y
+	if bottom_line + 108.0 + 30.0 > size.y:
+		heightened.add_theme_font_override("bold_font", fonts_bold[2])
+		heightened.add_theme_font_override("normal_font", fonts_regular[2])
+		await get_tree().process_frame
+		bottom_line = $Content/VBoxContainer/End.position.y
+	if bottom_line + 108.0 + 30.0 > size.y:
+		description.add_theme_font_override("bold_font", fonts_bold[3])
+		description.add_theme_font_override("normal_font", fonts_regular[3])
+		await get_tree().process_frame
+		bottom_line = $Content/VBoxContainer/End.position.y
+	if bottom_line + 108.0 + 30.0 > size.y:
+		heightened.add_theme_font_override("bold_font", fonts_bold[3])
+		heightened.add_theme_font_override("normal_font", fonts_regular[3])
+		await get_tree().process_frame
+		bottom_line = $Content/VBoxContainer/End.position.y
+	if bottom_line + 108.0 + 30.0 > size.y:
+		var total_size: float = $Content/VBoxContainer.get_rect().size.y
+		var allowed_size: float = size.y - 108.0 - 30.0
+		$Content/VBoxContainer.scale.y = allowed_size / total_size
+			
+		
+
+		
 		
 	
 func _update_card_visuals() -> void:
@@ -348,4 +352,5 @@ func _update_card_visuals() -> void:
 	_update_color()
 	_update_header()
 	_update_content()
+	#Globals.overlay_images($Content/VBoxContainer/Description, ["res://Data/Icons/acid.png", "res://Data/Icons/bleed.png"])
 	
