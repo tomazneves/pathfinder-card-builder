@@ -31,6 +31,8 @@ enum CardType {
 }
 
 @onready var is_ready: bool = true
+
+# Fonts
 @onready var font_cond0_reg:  Font = preload(font_fname + "Regular.otf")
 @onready var font_cond1_reg:  Font = preload(font_fname + "Narr.otf")
 @onready var font_cond2_reg:  Font = preload(font_fname + "Cond.otf")
@@ -39,21 +41,27 @@ enum CardType {
 @onready var font_cond1_bold: Font = preload(font_fname + "NarrBold.otf")
 @onready var font_cond2_bold: Font = preload(font_fname + "CondBold.otf")
 @onready var font_cond3_bold: Font = preload(font_fname + "XCondBold.otf")
-@onready var label: Label = $MarginContainer2/HBoxContainer/MarginContainer/Name
-@onready var actions: Label = $MarginContainer2/HBoxContainer/Actions
-@onready var category: Label = $MarginContainer3/Type
-@onready var traits: RichTextLabel = $Content/MarginContainer/VBoxContainer/MarginContainer/Traits
-@onready var traits_sep: HSeparator = $Content/MarginContainer/VBoxContainer/TraitsSep
-@onready var parameters: RichTextLabel = $Content/MarginContainer/VBoxContainer/Parameters
-@onready var parameters_sep: HSeparator = $Content/MarginContainer/VBoxContainer/ParametersSep
-@onready var description: RichTextLabel = $Content/MarginContainer/VBoxContainer/Description
-@onready var content: MarginContainer = $Content
-@onready var heightened: RichTextLabel = $Content/MarginContainer/VBoxContainer/Heightened
-@onready var heightened_sep: HSeparator = $Content/MarginContainer/VBoxContainer/HeightenedSep
 
-@onready var fonts_regular: Array[Font] = [font_cond0_reg, font_cond1_reg, font_cond2_reg, font_cond3_reg]
-@onready var fonts_bold: Array[Font] = [font_cond0_bold, font_cond1_bold, font_cond2_bold, font_cond3_bold]
+@onready var fonts_regular: Array[Font] = [
+	font_cond0_reg,  font_cond1_reg,  font_cond2_reg,  font_cond3_reg]
+@onready var fonts_bold: 	Array[Font] = [
+	font_cond0_bold, font_cond1_bold, font_cond2_bold, font_cond3_bold]
 
+# Nodes
+@onready var label: 			Label = 			$Header/MarginContainerName/Name
+@onready var actions: 			Label = 			$Header/MarginContainerActions/Actions
+@onready var category: 			Label = 			$MarginContainerCategory/Category
+@onready var traits: 			RichTextLabel = 	$Content/VBoxContainer/MarginContainer/Traits
+@onready var traits_sep: 		HSeparator = 		$Content/VBoxContainer/TraitsSep
+@onready var parameters: 		RichTextLabel = 	$Content/VBoxContainer/Parameters
+@onready var parameters_sep: 	HSeparator = 		$Content/VBoxContainer/ParametersSep
+@onready var description: 		RichTextLabel = 	$Content/VBoxContainer/Description
+@onready var content: 			MarginContainer = 	$Content
+@onready var heightened: 		RichTextLabel = 	$Content/VBoxContainer/Heightened
+@onready var heightened_sep: 	HSeparator = 		$Content/VBoxContainer/HeightenedSep
+
+# Exports
+@export var card_size: Vector2 = Vector2(710, 1093)
 @export var card_type: CardType = CardType.ATTACK:
 	set(value):
 		card_type = value
@@ -67,7 +75,7 @@ enum CardType {
 	set(value):
 		card_cost = value
 		_update_card_visuals()
-@export var card_category: String = "Focus":
+@export var card_category: String = "Basic":
 	set(value):
 		card_category = value
 		_update_card_visuals()
@@ -129,67 +137,145 @@ enum CardType {
 		card_heightened = value
 		_update_card_visuals()
 
-var bound: float = 0.0
-var antibound: float = 710.0
+# Metadata
+var left_bound: float = 0.0
+var right_bound: float = 710.0
 var space_to_slope: float = 10.0
-var point_of_slope: float = bound + space_to_slope + 59.0
+var point_of_slope: float = left_bound + space_to_slope + 59.0
 
+# Functions
+func _ready() -> void:
+	_update_card_visuals()
+	
 func sleep(t: float) -> void:
 	await get_tree().create_timer(t).timeout 
 
 func apply_rects(left: int, right: int) -> void:
-	$LeftPoly.polygon[2].x = left
-	$LeftPoly.polygon[3].x = left
-	$RightPoly.polygon[2].x = right
-	$RightPoly.polygon[3].x = right
+	var poly_left: Polygon2D = $LeftPoly
+	var poly_right: Polygon2D = $RightPoly
+	
+	var new_array_left: PackedVector2Array = poly_left.polygon
+	var new_array_right: PackedVector2Array = poly_right.polygon
+	
+	new_array_left[2].x = left
+	new_array_left[3].x = left
+	new_array_right[2].x = right
+	new_array_right[3].x = right
+	
+	poly_left.set("polygon", new_array_left)
+	poly_right.set("polygon", new_array_right)
+	
 
 func _recalculate_header_constants() -> void:
 	if not is_ready:
 		return
-	#await get_tree().process_frame
-
-	self.bound = label.get_character_bounds(len(label.text)-1).end.x + self.actions.get_character_bounds(len(actions.text)-1).end.x + 38
+		
+	await get_tree().process_frame
+	self.left_bound = label.get_rect().size.x + actions.get_rect().size.x + 38
+	self.right_bound = self.get_rect().size.x - category.get_rect().size.x - 48
+	apply_rects(self.left_bound, self.right_bound)
 	
-	self.antibound = self.get_rect().size.x - category.get_rect().size.x - 48
-	self.point_of_slope = bound + space_to_slope + 59.0
-	
-	apply_rects(self.bound, self.antibound)
-	
-
-func _ready() -> void:
-	_update_card_visuals()
 
 func get_type_color() -> Color:
 	return TYPE_COLORS[card_type]
 
 func _update_color() -> void:
-	$MarginColorRect.color = get_type_color()
-	$Polygon2D.color = get_type_color()
+	$Margin.color = get_type_color()
+	
+func calculate_box_sizes_with_margins(
+	box_a: float, 
+	box_b: float, 
+	max_space: float, 
+	a_threshold: float, 
+	b_min: float,
+	margin_left: float,
+	margin_between: float,
+	margin_right: float
+) -> Dictionary:
+	
+	var total_margins: float = margin_left + margin_between + margin_right
+	var total_box_size: float = box_a + box_b
+	var total_size: float = total_box_size + total_margins
+	
+	# Step 1: If boxes AND margins fit perfectly within the original space, return.
+	if total_size <= max_space:
+		return _pack_result(box_a, box_b, box_a, box_b)
+		
+	# The excess is how much space we need to subtract from the boxes (margins are fixed)
+	var excess: float = total_size - max_space
+	
+	# Calculate how much Box A is allowed to shrink before hitting its threshold
+	var a_threshold_size: float = box_a * a_threshold
+	var a_max_initial_squeeze: float = max(0.0, box_a - a_threshold_size)
+	
+	# Step 2 & 3: Squeeze Box A until it fits, up to its threshold.
+	if excess <= a_max_initial_squeeze:
+		var new_a: float = box_a - excess
+		return _pack_result(new_a, box_b, box_a, box_b)
+		
+	# Step 4: Squeeze Box B as much as needed until its minimum length.
+	var remaining_excess: float = excess - a_max_initial_squeeze
+	var b_max_squeeze: float = max(0.0, box_b - b_min)
+	
+	# Step 5: If squeezing Box B was enough to fit, return.
+	if remaining_excess <= b_max_squeeze:
+		var new_b: float = box_b - remaining_excess
+		return _pack_result(a_threshold_size, new_b, box_a, box_b)
+		
+	# Step 6: Keep Box B squeezed at its minimum, and squeeze Box A as much as necessary.
+	remaining_excess -= b_max_squeeze
+	var final_a: float = a_threshold_size - remaining_excess
+	
+	return _pack_result(final_a, b_min, box_a, box_b)
+
+# Helper function to prevent division-by-zero when calculating scale
+func _pack_result(new_a: float, new_b: float, orig_a: float, orig_b: float) -> Dictionary:
+	return {
+		"size_a": new_a,
+		"scale_a": new_a / orig_a if orig_a != 0.0 else 1.0,
+		"size_b": new_b,
+		"scale_b": new_b / orig_b if orig_b != 0.0 else 1.0
+	}
 	
 func _update_header() -> void:
+	const inset_height: float = 50.0
+	const min_slope_x: float = 10.0
+	const max_slope_x: float = inset_height
+	const min_squeeze: float = 0.7
+	const slope_margin: float = 10.0
+	var slope_start: float = left_bound + slope_margin
+	
 	label.text = card_name
 	actions.text = card_cost
 	category.text = card_category
 	category.add_theme_font_override("font", font_cond1_bold)
+	label.scale.x = 1.0
+	await _recalculate_header_constants()
 	
-	_recalculate_header_constants()
-	
-	if point_of_slope > antibound:
-		category.add_theme_font_override("font", font_cond2_bold)
-		_recalculate_header_constants()
+	# If content doesn't fit, try to condense the Category text
+	#if left_bound + slope_margin + max_slope_x > right_bound:
+		#category.add_theme_font_override("font", font_cond2_bold)
+		#await _recalculate_header_constants()
 		
-	if point_of_slope > antibound:
-		category.add_theme_font_override("font", font_cond3_bold)
-		_recalculate_header_constants()
-		
+	# If still doesnt fit, squeeze Name text and slope
+	var left_margin: float = actions.get_rect().size.x + 38
+	var right_margin: float = category.get_rect().size.x + 58
+	var sizing: Dictionary = calculate_box_sizes_with_margins(
+		label.get_rect().size.x,
+		50.0,
+		card_size.x,
+		min_squeeze,
+		min_slope_x,
+		left_margin,
+		slope_margin,
+		right_margin
+	)
 	
-	_recalculate_header_constants()
-	$Polygon2D.polygon[2].x = 10.0 + bound
-	$Polygon2D.polygon[3].x = clamp(point_of_slope, 10.0 + bound, antibound)
-	if $Polygon2D.polygon[3].x < $Polygon2D.polygon[2].x:
-		$Polygon2D.polygon[3].x = $Polygon2D.polygon[2].x
-	
-	_recalculate_header_constants()
+	var bg_poly: PackedVector2Array = $Background.polygon
+	bg_poly[4].x = left_margin + sizing["size_a"] + slope_margin + sizing["size_b"]
+	bg_poly[5].x = left_margin + sizing["size_a"] + slope_margin
+	$Background.set("polygon", bg_poly)
+	label.scale.x = sizing["scale_a"]
 
 func _update_parameters() -> void:
 	var param_string = ""
@@ -225,7 +311,7 @@ func _update_parameters() -> void:
 		param_string = "\n".join(param_array)
 		parameters.text = param_string
 		parameters.show()
-		$Content/MarginContainer/VBoxContainer/ParametersSep.show()
+		parameters_sep.show()
 	else:
 		parameters.hide()
 		parameters_sep.hide()
@@ -260,8 +346,6 @@ func _update_card_visuals() -> void:
 		return
 		
 	_update_color()
-	_recalculate_header_constants()
 	_update_header()
 	_update_content()
-	_recalculate_header_constants()
 	

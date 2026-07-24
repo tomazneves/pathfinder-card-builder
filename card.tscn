@@ -18,10 +18,12 @@ anchor_bottom = 0.312
 offset_right = 0.7199707
 offset_bottom = -1.4959717
 script = ExtResource("1_kikvd")
-card_name = "Aid"
+card_name = "bracers of gravitational attraction"
+card_frequency = "once per day"
 condension = 2
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1219346354]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -30,7 +32,7 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("2_1i5pp")
 
-[node name="MarginColorRect" type="ColorRect" parent="." unique_id=1224124855]
+[node name="Margin" type="ColorRect" parent="." unique_id=1224124855]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -39,57 +41,41 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(1, 0, 0, 1)
 
-[node name="MarginContainer" type="MarginContainer" parent="." unique_id=228312511]
+[node name="Background" type="Polygon2D" parent="." unique_id=1595980715]
+polygon = PackedVector2Array(30, 90, 30, 1063, 680, 1063, 680, 30, 385, 30, 325, 90)
+
+[node name="Header" type="HBoxContainer" parent="." unique_id=162703210]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 30
-theme_override_constants/margin_top = 30
-theme_override_constants/margin_right = 30
-theme_override_constants/margin_bottom = 30
-
-[node name="ColorRect" type="ColorRect" parent="MarginContainer" unique_id=577411252]
-layout_mode = 2
-
-[node name="Polygon2D" type="Polygon2D" parent="." unique_id=367976775]
-color = Color(1, 0, 0, 1)
-polygon = PackedVector2Array(0, 29, 0, 88, 170, 88, 229, 29)
-
-[node name="MarginContainer2" type="MarginContainer" parent="." unique_id=1975271061]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = -3
-theme_override_constants/margin_bottom = -6
-
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer2" unique_id=162703210]
-layout_mode = 2
+offset_right = 319.0
+offset_bottom = 97.0
 size_flags_horizontal = 0
 size_flags_vertical = 0
 theme_override_constants/separation = 8
 
-[node name="Actions" type="Label" parent="MarginContainer2/HBoxContainer" unique_id=557444708]
+[node name="MarginContainerActions" type="MarginContainer" parent="Header" unique_id=1975271061]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = -3
+theme_override_constants/margin_bottom = -6
+
+[node name="Actions" type="Label" parent="Header/MarginContainerActions" unique_id=557444708]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("3_fpac0")
 theme_override_font_sizes/font_size = 96
 text = "2"
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer2/HBoxContainer" unique_id=1802501673]
+[node name="MarginContainerName" type="MarginContainer" parent="Header" unique_id=1802501673]
 layout_mode = 2
 theme_override_constants/margin_top = 8
 
-[node name="Name" type="Label" parent="MarginContainer2/HBoxContainer/MarginContainer" unique_id=1332746451]
+[node name="Name" type="Label" parent="Header/MarginContainerName" unique_id=1332746451]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_1i5pp")
 theme_override_font_sizes/font_size = 64
-text = "frostbite"
+text = "Lorem Ips"
 uppercase = true
 
-[node name="MarginContainer3" type="MarginContainer" parent="." unique_id=1094298656]
+[node name="MarginContainerCategory" type="MarginContainer" parent="." unique_id=1094298656]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -102,12 +88,12 @@ size_flags_vertical = 0
 theme_override_constants/margin_top = 44
 theme_override_constants/margin_right = 47
 
-[node name="Type" type="Label" parent="MarginContainer3" unique_id=976522567]
+[node name="Category" type="Label" parent="MarginContainerCategory" unique_id=976522567]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("6_b4rk6")
 theme_override_font_sizes/font_size = 32
-text = "CANTRIP"
+text = "DOLOr SIt"
 horizontal_alignment = 2
 uppercase = true
 
@@ -118,50 +104,37 @@ anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 1213.0
 grow_horizontal = 2
-theme_override_constants/margin_left = 30
-theme_override_constants/margin_top = 88
-theme_override_constants/margin_right = 30
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 108
+theme_override_constants/margin_right = 48
 theme_override_constants/margin_bottom = 30
 
-[node name="MarginContainer" type="MarginContainer" parent="Content" unique_id=833169639]
-clip_contents = true
-layout_mode = 2
-size_flags_vertical = 0
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 18
-theme_override_constants/margin_right = 18
-
-[node name="ColorRect" type="ColorRect" parent="Content/MarginContainer" unique_id=281895539]
-visible = false
-layout_mode = 2
-color = Color(0, 1, 1, 1)
-
-[node name="VBoxContainer" type="VBoxContainer" parent="Content/MarginContainer" unique_id=387332194]
+[node name="VBoxContainer" type="VBoxContainer" parent="Content" unique_id=387332194]
 clip_contents = true
 layout_mode = 2
 size_flags_vertical = 0
 
-[node name="MarginContainer" type="MarginContainer" parent="Content/MarginContainer/VBoxContainer" unique_id=918101826]
+[node name="MarginContainer" type="MarginContainer" parent="Content/VBoxContainer" unique_id=918101826]
 layout_mode = 2
 theme_override_constants/margin_top = -3
 
-[node name="Traits" type="RichTextLabel" parent="Content/MarginContainer/VBoxContainer/MarginContainer" unique_id=1684192982]
+[node name="Traits" type="RichTextLabel" parent="Content/VBoxContainer/MarginContainer" unique_id=1684192982]
 layout_mode = 2
 theme_override_colors/default_color = Color(0.6, 0.6, 0.6, 1)
 theme_override_fonts/normal_font = ExtResource("6_b4rk6")
 theme_override_font_sizes/normal_font_size = 33
-text = "ATTACK CANTRIP COLD"
+text = "AMET CONSECTETUR ADIPISCING ELIT"
 fit_content = true
 scroll_active = false
 horizontal_alignment = 3
 justification_flags = 42
 
-[node name="TraitsSep" type="HSeparator" parent="Content/MarginContainer/VBoxContainer" unique_id=1138471266]
+[node name="TraitsSep" type="HSeparator" parent="Content/VBoxContainer" unique_id=1138471266]
 layout_mode = 2
 theme_override_constants/separation = 20
 theme_override_styles/separator = SubResource("StyleBoxLine_6lcat")
 
-[node name="Parameters" type="RichTextLabel" parent="Content/MarginContainer/VBoxContainer" unique_id=408268968]
+[node name="Parameters" type="RichTextLabel" parent="Content/VBoxContainer" unique_id=408268968]
 layout_mode = 2
 theme = ExtResource("5_pjytt")
 bbcode_enabled = true
@@ -170,43 +143,38 @@ text = "[b]Traditions:[/b] Arcane, Primal.
 [b]Defense:[/b] Basic Fortitude."
 fit_content = true
 
-[node name="ParametersSep" type="HSeparator" parent="Content/MarginContainer/VBoxContainer" unique_id=69505361]
+[node name="ParametersSep" type="HSeparator" parent="Content/VBoxContainer" unique_id=69505361]
 layout_mode = 2
 theme_override_constants/separation = 20
 theme_override_styles/separator = SubResource("StyleBoxLine_6lcat")
 
-[node name="Description" type="RichTextLabel" parent="Content/MarginContainer/VBoxContainer" unique_id=530663461]
+[node name="Description" type="RichTextLabel" parent="Content/VBoxContainer" unique_id=530663461]
 layout_mode = 2
 theme = ExtResource("5_pjytt")
 bbcode_enabled = true
-text = "You utter a litany of dreadful names, prophecies, and descriptions of realms beyond mortal comprehension, drawn from your study of forbidden tomes and scrolls. Even those who don't understand your language are unsettled by these dire secrets. Attempt an Occultism check and compare the result to the Will DC of an enemy within 30 feet, or to the Will DCs of any number of enemies within 30 feet if you are legendary in Occultism. Those creatures are temporarily immune for 24 hours.\\n[ul]\\n[b]Critical Success:[/b] The target becomes confused for 1 round and frightened 1.\\n[b]Success:[/b] The target becomes frightened 1.\\n[b]Failure:[/b] The target is unaffected.\\n[b]Critical Failure:[/b] You get overly caught up in your own words and become frightened 1.\\n[/ul]"
+text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 fit_content = true
 scroll_active = false
 horizontal_alignment = 3
 justification_flags = 35
 
-[node name="HeightenedSep" type="HSeparator" parent="Content/MarginContainer/VBoxContainer" unique_id=1859735323]
+[node name="HeightenedSep" type="HSeparator" parent="Content/VBoxContainer" unique_id=1859735323]
 layout_mode = 2
 theme_override_constants/separation = 20
 theme_override_styles/separator = SubResource("StyleBoxLine_6lcat")
 
-[node name="Heightened" type="RichTextLabel" parent="Content/MarginContainer/VBoxContainer" unique_id=1127723606]
+[node name="Heightened" type="RichTextLabel" parent="Content/VBoxContainer" unique_id=1127723606]
 layout_mode = 2
 theme = ExtResource("5_pjytt")
 bbcode_enabled = true
-text = "You send out a ray of colored light streaming toward your enemy, with a magical effect depending on the ray's color. Make a spell attack roll. If you hit, roll 1d4 to see which beam you cast. If the ray deals damage, that damage is doubled on a critical hit. Any additional traits that apply to a ray are listed in parentheses just after the name of the color.
-[ol type=1]
-[b]Red:[/b] (fire) The ray deals 30 fire damage to the target.
-[b]Orange:[/b] (acid) The ray deals 40 acid damage to the target.
-[b]Yellow:[/b] (electricity) The ray deals 50 electricity damage to the target.
-[b]Green:[/b] (poison) The ray deals 25 poison damage to the target, and the target must succeed at a Fortitude save or be enfeebled 1 for 1 minute (enfeebled 2 on a critical failure).
-[/ol]"
+text = "[b]Heightened (+1):[/b] Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo."
 fit_content = true
 scroll_active = false
 horizontal_alignment = 3
 justification_flags = 35
 
-[node name="End" type="Control" parent="Content/MarginContainer/VBoxContainer" unique_id=2052876247]
+[node name="End" type="Control" parent="Content/VBoxContainer" unique_id=2052876247]
 layout_mode = 2
 
 [node name="LeftPoly" type="Polygon2D" parent="." unique_id=1279731435]

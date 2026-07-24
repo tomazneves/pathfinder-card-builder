@@ -28,14 +28,14 @@ func _on_button_pressed() -> void:
   "cost": "aa",
   "category": "Spell 4",
   "traits": [
-    "Attack",
-    "Concentrate",
-    "Manipulate",
-    "Light"
+	"Attack",
+	"Concentrate",
+	"Manipulate",
+	"Light"
   ],
   "traditions": [
-    "Arcane",
-    "Occult"
+	"Arcane",
+	"Occult"
   ],
   "range": "30 feet",
   "frequency": "",
