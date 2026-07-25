@@ -1,5 +1,5 @@
 extends Control # Change to Node2D or your specific base node
-class_name Card
+class_name CardFront
 
 const font_fname: String = "res://Fonts/GoodPro/GoodPro-"
 const spacer: String = "|"

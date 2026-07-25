@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://t5p2kavtyumc"]
 
-[ext_resource type="Script" uid="uid://564x84e8qtxs" path="res://card.gd" id="1_kikvd"]
-[ext_resource type="Texture2D" uid="uid://cf6e84mx4hbe5" path="res://frostbite.png" id="2_1i5pp"]
+[ext_resource type="Script" uid="uid://564x84e8qtxs" path="res://Scripts/card_front.gd" id="1_5vnct"]
+[ext_resource type="Texture2D" uid="uid://cf6e84mx4hbe5" path="res://Examples/frostbite.png" id="2_1i5pp"]
 [ext_resource type="FontFile" uid="uid://bqktg2vej5rcj" path="res://Fonts/Pathfinder2eActions.ttf" id="3_fpac0"]
 [ext_resource type="FontFile" uid="uid://bhb2785lu3gra" path="res://Fonts/GoodPro/GoodPro-XCondBold.otf" id="4_1i5pp"]
-[ext_resource type="Theme" uid="uid://su6wy2tsssy2" path="res://theme.tres" id="5_pjytt"]
+[ext_resource type="Theme" uid="uid://su6wy2tsssy2" path="res://Data/theme.tres" id="5_pjytt"]
 [ext_resource type="FontFile" uid="uid://caf4146jspiok" path="res://Fonts/GoodPro/GoodPro-CondBold.otf" id="6_b4rk6"]
 [ext_resource type="Texture2D" uid="uid://ovswfjoqhq0m" path="res://Data/fire.tres" id="7_pjytt"]
 [ext_resource type="PackedScene" uid="uid://c4eshrkrngbmv" path="res://mouse-tracker.tscn" id="8_b4rk6"]
@@ -12,14 +12,14 @@
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_6lcat"]
 thickness = 2
 
-[node name="Card" type="Control" unique_id=180015982]
+[node name="CardFront" type="Control" unique_id=180015982]
 custom_minimum_size = Vector2(710, 1093)
 layout_mode = 3
 anchor_right = 0.286
 anchor_bottom = 0.312
 offset_right = 0.7199707
 offset_bottom = -1.4959717
-script = ExtResource("1_kikvd")
+script = ExtResource("1_5vnct")
 card_name = "flaming boots"
 card_cost = "2"
 card_category = "spell 2"

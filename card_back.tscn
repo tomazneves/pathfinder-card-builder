@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://ceyeaxop1qxbo"]
 
-[ext_resource type="Script" uid="uid://bea4jjehyq1u3" path="res://card_back.gd" id="1_rdhif"]
-[ext_resource type="Texture2D" uid="uid://b2tb3j4dpcq1w" path="res://card_back_example.png" id="2_a1nsi"]
+[ext_resource type="Script" uid="uid://bea4jjehyq1u3" path="res://Scripts/card_back.gd" id="1_rdhif"]
+[ext_resource type="Texture2D" uid="uid://b2tb3j4dpcq1w" path="res://Examples/card_back_example.png" id="2_a1nsi"]
 [ext_resource type="FontFile" uid="uid://bqktg2vej5rcj" path="res://Fonts/Pathfinder2eActions.ttf" id="3_e7hf5"]
 [ext_resource type="FontFile" uid="uid://caf4146jspiok" path="res://Fonts/GoodPro/GoodPro-CondBold.otf" id="5_vhgc4"]
 [ext_resource type="FontFile" uid="uid://c2hfq5m5hcvyo" path="res://Fonts/GoodPro/GoodPro-Bold.otf" id="6_mvpak"]
@@ -15,10 +15,10 @@ anchor_bottom = 0.312
 offset_right = 0.7199707
 offset_bottom = -1.4959717
 script = ExtResource("1_rdhif")
-card_type = 3
-card_name = "rallying anthem"
-card_category = "Cantrip"
-card_traits = Array[String](["uncommon", "bard", "composition", "concentrate", "emotion", "mental"])
+card_type = 2
+card_name = "stand"
+card_category = "basic"
+card_traits = Array[String](["move"])
 
 [node name="Base" type="TextureRect" parent="." unique_id=1219346354]
 layout_mode = 1

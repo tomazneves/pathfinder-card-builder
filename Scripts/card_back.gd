@@ -104,6 +104,9 @@ func _update_card_visuals() -> void:
 		for label in labels:
 			label.add_theme_constant_override("outline_size", 35)
 			label.add_theme_color_override("font_outline_color", rarity_color)
+	else:
+		for label in labels:
+			label.add_theme_constant_override("outline_size", 0)
 
 
 	_load_trait_pictures()

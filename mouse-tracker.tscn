@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c4eshrkrngbmv"]
 
-[ext_resource type="Script" uid="uid://cna3kdr8cll7y" path="res://mouse_tracker.gd" id="1_qdxr0"]
+[ext_resource type="Script" uid="uid://cna3kdr8cll7y" path="res://Scripts/mouse_tracker.gd" id="1_qdxr0"]
 
 [node name="MouseTracker" type="Marker2D" unique_id=1060612503]
 script = ExtResource("1_qdxr0")
