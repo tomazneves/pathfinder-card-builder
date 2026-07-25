@@ -224,75 +224,114 @@ func _get_or_create_recorder(rtl: RichTextLabel) -> CharPositionRecorder:
 	var existing = rtl.get_meta("_char_position_recorder", null)
 	if existing != null and is_instance_valid(existing):
 		return existing
-
 	var recorder := CharPositionRecorder.new()
 	rtl.install_effect(recorder)
-	rtl.set_meta("_char_position_recorder", recorder)  # stash it on the node itself
+	rtl.set_meta("_char_position_recorder", recorder)
 	return recorder
 
-## ------------------------------------------------------------------
-## 2) Finds every occurrence of `substring` and returns its screen-space
-##    Rect2 bounds. Handles BBCode ([b], [color], ...) and justification
-##    (Kashida, Word Bound, Skip Last Line) because it reads positions
-##    straight off the actual shaped/justified layout instead of
-##    computing them itself.
-##
-## Must be awaited — it needs one draw pass to populate character
-## positions:
-##     var rects = await find_substring_screen_positions(rtl, "foo")
-## ------------------------------------------------------------------
+
+## Splits raw BBCode source into alternating tag / literal-text tokens.
+## Every `[...]` is treated as an opaque tag boundary; this works for
+## [b], [color], [ul]/[ol]/[list], tables, etc. without needing to
+## understand what any given tag does.
+func _tokenize_bbcode(source: String) -> Array:
+	var tokens: Array = []
+	var regex := RegEx.new()
+	regex.compile("\\[[^\\]]*\\]")
+	var cursor := 0
+
+	for result in regex.search_all(source):
+		var tag_start: int = result.get_start()
+		var tag_end: int = result.get_end()
+		if tag_start > cursor:
+			tokens.append({"is_tag": false, "text": source.substr(cursor, tag_start - cursor)})
+		tokens.append({"is_tag": true, "text": source.substr(tag_start, tag_end - tag_start)})
+		cursor = tag_end
+
+	if cursor < source.length():
+		tokens.append({"is_tag": false, "text": source.substr(cursor)})
+
+	return tokens
+
+
 func find_substring_screen_positions(rtl: RichTextLabel, substring: String) -> Array[Rect2]:
 	var results: Array[Rect2] = []
 	if substring.is_empty():
-		#print("Case 1: ", results)
 		return results
 
-	# --- Step 1: locate matches in the RENDERED (tag-stripped) text ---
-	#print("> Step 1")
-	var full_text: String = rtl.get_parsed_text()
+	var original_bbcode: String = rtl.text
+	var tokens: Array = _tokenize_bbcode(original_bbcode)
+
+	# --- Build OUR OWN "virtual parsed text" from literal segments only. ---
+	# List bullets/numbers are synthesized by Godot at draw time and never
+	# exist in the raw source, so they simply can't appear here — no
+	# assumption about Godot's internal indexing is needed at all.
+	var virtual_text := ""
+	var char_segment_map: Array = []  # parallel to virtual_text: [seg_id, local_idx]
+	var rebuilt_bbcode := ""
+	var seg_id := 0
+
+	for token in tokens:
+		if token["is_tag"]:
+			rebuilt_bbcode += token["text"]
+		else:
+			var text: String = token["text"]
+			if text.is_empty():
+				continue
+			rebuilt_bbcode += "[reclocpos id=%d]%s[/reclocpos]" % [seg_id, text]
+			for local_idx in range(text.length()):
+				char_segment_map.append([seg_id, local_idx])
+			virtual_text += text
+			seg_id += 1
+
+	# --- Locate matches against OUR OWN virtual text ---
 	var match_starts: Array[int] = []
 	var search_start := 0
 	while true:
-		var found := full_text.find(substring, search_start)
+		var found := virtual_text.find(substring, search_start)
 		if found == -1:
 			break
 		match_starts.append(found)
-		search_start = found + 1  # overlap-permissive; use + substring.length() to disallow
+		search_start = found + 1
 
 	if match_starts.is_empty():
-		#print("Case 2: ", results)
 		return results
 
-	# --- Reuse the same recorder every time, and wipe stale data ---
+	# --- Install/reuse the recorder, draw with tagged segments, restore ---
 	var recorder := _get_or_create_recorder(rtl)
-	recorder.char_positions.clear()  # discard positions from any earlier run
+	recorder.positions_by_segment.clear()
 
-	var original_bbcode: String = rtl.text
-	rtl.text = "[reclocpos]" + original_bbcode + "[/reclocpos]"
-
+	rtl.text = rebuilt_bbcode
 	rtl.queue_redraw()
 	await rtl.get_tree().process_frame
 	await rtl.get_tree().process_frame
 
 	rtl.text = original_bbcode
+
+	# --- Build Rect2s per matched occurrence, split by visual line ---
 	var canvas_xform: Transform2D = rtl.get_global_transform_with_canvas()
 	var font: Font = rtl.get_theme_font("normal_font")
 	var font_size: int = rtl.get_theme_font_size("normal_font_size")
 	var line_height: float = font.get_height(font_size) if font else 20.0
 
 	for start_index in match_starts:
-		#print("start_index = ", start_index)
-		var line_groups: Dictionary = {}   # rounded_y -> Array of x positions
+		var line_groups: Dictionary = {}
 		var ordered_ys: Array[float] = []
 
 		for i in range(substring.length()):
-			#print("i = ", i)
-			var idx := start_index + i
-			if not recorder.char_positions.has(idx):
-				#print("recorder", recorder.char_positions)
+			var map_idx := start_index + i
+			if map_idx >= char_segment_map.size():
 				continue
-			var pos: Vector2 = recorder.char_positions[idx]
-			var y_key := snappedf(pos.y, 0.01)  # group characters on the same line
+			var seg: int = char_segment_map[map_idx][0]
+			var local_idx: int = char_segment_map[map_idx][1]
+
+			if not recorder.positions_by_segment.has(seg):
+				continue
+			if not recorder.positions_by_segment[seg].has(local_idx):
+				continue
+
+			var pos: Vector2 = recorder.positions_by_segment[seg][local_idx]
+			var y_key := snappedf(pos.y, 0.01)
 
 			if not line_groups.has(y_key):
 				line_groups[y_key] = []
@@ -302,20 +341,20 @@ func find_substring_screen_positions(rtl: RichTextLabel, substring: String) -> A
 		ordered_ys.sort()
 
 		for y_key in ordered_ys:
-			#print("y_key = ", y_key)
 			var xs: Array = line_groups[y_key]
 			xs.sort()
 			var left: float = xs[0]
 			var right: float = xs[xs.size() - 1]
 
-			# Use the position of the very next character (if on the same
-			# line) as the right edge — gives an exact width with no font
-			# metrics guesswork.
-			var last_char_index: int = start_index + substring.length() - 1
-			if recorder.char_positions.has(last_char_index + 1):
-				var next_pos: Vector2 = recorder.char_positions[last_char_index + 1]
-				if is_equal_approx(snappedf(next_pos.y, 0.01), y_key):
-					right = next_pos.x
+			var last_map_idx: int = start_index + substring.length() - 1
+			if last_map_idx + 1 < char_segment_map.size():
+				var next_seg: int = char_segment_map[last_map_idx + 1][0]
+				var next_local: int = char_segment_map[last_map_idx + 1][1]
+				if recorder.positions_by_segment.has(next_seg) and recorder.positions_by_segment[next_seg].has(next_local):
+					var next_pos: Vector2 = recorder.positions_by_segment[next_seg][next_local]
+					if is_equal_approx(snappedf(next_pos.y, 0.01), y_key):
+						right = next_pos.x
+
 			if right <= left and font:
 				right = left + font.get_string_size("M", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 
@@ -324,5 +363,4 @@ func find_substring_screen_positions(rtl: RichTextLabel, substring: String) -> A
 			var bottom_right: Vector2 = canvas_xform * (local_rect.position + local_rect.size)
 			results.append(Rect2(top_left, bottom_right - top_left))
 
-	#print("Case 3: ", results)
 	return results

@@ -133,13 +133,22 @@ enum CardType {
 		_update_card_visuals()
 @export_multiline var card_description: String = """Lorem ipsum.\nDolor sit amet.""":
 	set(value):
-		card_description = value
+		var regex := RegEx.create_from_string("\n+")
+		var regex_clean_lists := RegEx.create_from_string("\n*(\\[\\/{0,1}[ou]l\\])\n*")
+		card_description = regex.sub(value, "\n", true)
+		card_description = regex_clean_lists.sub(card_description, "$1", true)
 		_update_card_visuals()
 @export var card_heightened: Dictionary[String, String] = {
-	"Heightened (+1)": """The damage increases by 1d4 and the weakness on a critical failure increases by 1."""
+	"Heightened (+1)": """The damage increases by:\n[ol]\nFire: 1d4\nCold: 1d6[/ol]\n and the weakness on a critical failure increases by 1."""
 }:
 	set(value):
-		card_heightened = value
+		var regex := RegEx.create_from_string("\n+")
+		var regex_clean_lists := RegEx.create_from_string("\n*(\\[\\/{0,1}[ou]l\\])\n*")
+		card_heightened = {}
+		for key in value.keys():
+			var txt := regex.sub(value[key], "\n", true)
+			txt = regex_clean_lists.sub(txt, "$1", true)
+			card_heightened.get_or_add(key, txt)
 		_update_card_visuals()
 @export_multiline var test: Dictionary[String, String] = {"Heightened (+1)": "YEAG"}
 

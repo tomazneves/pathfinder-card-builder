@@ -31,8 +31,10 @@ card_defense = "Basic Reflex"
 card_duration = "Up to 1 minute"
 card_description = "With a sudden kick, you conjure a dense ball of flame at your feet. The ball lasts for one minute, after which it sizzles out. This counts as a 2nd-rank Floating Flame spell, but doesn't have the Concentrate trait. You can Dismiss the ball by stomping on it as an Interact action with the MOVE trait.
 
-As part of the activation and as a 1-action Interact activity henceforth, you can kicik the ball up to 30 feet in any direction, and it is affecte by gravity normally. Any creature or object in the ball's path takes 3d6 fire damage on a basic Reflex save. A creature can take this damage only once per round.
+[ol]
 
+As part of the activation and as a 1-action Interact activity henceforth, you can kicik the ball up to 30 feet in any direction, and it is affecte by gravity normally. Any creature or object in the ball's path takes 3d6 fire damage on a basic Reflex save. A creature can take this damage only once per round.
+[/ol]
 If at the end of your turn the ball is in water, it produces steaming fog in a 5-foot emmanation, providing concealment, and loses one extra round of duration."
 card_heightened = Dictionary[String, String]({})
 

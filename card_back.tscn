@@ -1,0 +1,112 @@
+[gd_scene format=3 uid="uid://ceyeaxop1qxbo"]
+
+[ext_resource type="Script" uid="uid://bea4jjehyq1u3" path="res://card_back.gd" id="1_rdhif"]
+[ext_resource type="Texture2D" uid="uid://b2tb3j4dpcq1w" path="res://card_back_example.png" id="2_a1nsi"]
+[ext_resource type="FontFile" uid="uid://bqktg2vej5rcj" path="res://Fonts/Pathfinder2eActions.ttf" id="3_e7hf5"]
+[ext_resource type="FontFile" uid="uid://caf4146jspiok" path="res://Fonts/GoodPro/GoodPro-CondBold.otf" id="5_vhgc4"]
+[ext_resource type="FontFile" uid="uid://c2hfq5m5hcvyo" path="res://Fonts/GoodPro/GoodPro-Bold.otf" id="6_mvpak"]
+[ext_resource type="PackedScene" uid="uid://c4eshrkrngbmv" path="res://mouse-tracker.tscn" id="8_t8ng5"]
+
+[node name="CardBack" type="Control" unique_id=180015982]
+custom_minimum_size = Vector2(710, 1093)
+layout_mode = 3
+anchor_right = 0.286
+anchor_bottom = 0.312
+offset_right = 0.7199707
+offset_bottom = -1.4959717
+script = ExtResource("1_rdhif")
+card_type = 3
+card_name = "rallying anthem"
+card_category = "Cantrip"
+card_traits = Array[String](["uncommon", "bard", "composition", "concentrate", "emotion", "mental"])
+
+[node name="Base" type="TextureRect" parent="." unique_id=1219346354]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_a1nsi")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1224124855]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 0, 0, 1)
+
+[node name="MouseTracker" parent="." unique_id=521258117 instance=ExtResource("8_t8ng5")]
+visible = false
+
+[node name="Content" type="MarginContainer" parent="." unique_id=1802501673]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 230
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 100
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Content" unique_id=449683153]
+layout_mode = 2
+theme_override_constants/separation = -50
+
+[node name="Actions" type="Label" parent="Content/VBoxContainer" unique_id=557444708]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_fonts/font = ExtResource("3_e7hf5")
+theme_override_font_sizes/font_size = 450
+text = "1"
+horizontal_alignment = 1
+
+[node name="Name" type="Label" parent="Content/VBoxContainer" unique_id=1332746451]
+custom_maximum_size = Vector2(650, -1)
+layout_mode = 2
+size_flags_vertical = 2
+theme_override_constants/line_spacing = -20
+theme_override_fonts/font = ExtResource("5_vhgc4")
+theme_override_font_sizes/font_size = 119
+text = "MESSAGE"
+horizontal_alignment = 1
+autowrap_mode = 3
+uppercase = true
+
+[node name="Category" type="Label" parent="Content/VBoxContainer" unique_id=976522567]
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_fonts/font = ExtResource("6_mvpak")
+theme_override_font_sizes/font_size = 75
+text = "CANTRIP"
+horizontal_alignment = 1
+uppercase = true
+
+[node name="Traits" type="MarginContainer" parent="." unique_id=90450197]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_top = 25
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Traits" unique_id=285261944]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Row1" type="HBoxContainer" parent="Traits/VBoxContainer" unique_id=1717582400]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Row2" type="HBoxContainer" parent="Traits/VBoxContainer" unique_id=298470279]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_constants/separation = 6
+alignment = 1
