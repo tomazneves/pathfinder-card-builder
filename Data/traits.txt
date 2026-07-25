@@ -41,6 +41,7 @@ bard
 spellshape
 composition
 fortune
+detection
 fear
 misfortune
 curse
@@ -51,3 +52,4 @@ rage
 impulse
 overflow
 transcendance
+move

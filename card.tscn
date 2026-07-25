@@ -7,6 +7,7 @@
 [ext_resource type="Theme" uid="uid://su6wy2tsssy2" path="res://theme.tres" id="5_pjytt"]
 [ext_resource type="FontFile" uid="uid://caf4146jspiok" path="res://Fonts/GoodPro/GoodPro-CondBold.otf" id="6_b4rk6"]
 [ext_resource type="Texture2D" uid="uid://ovswfjoqhq0m" path="res://Data/fire.tres" id="7_pjytt"]
+[ext_resource type="PackedScene" uid="uid://c4eshrkrngbmv" path="res://mouse-tracker.tscn" id="8_b4rk6"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_6lcat"]
 thickness = 2
@@ -19,9 +20,20 @@ anchor_bottom = 0.312
 offset_right = 0.7199707
 offset_bottom = -1.4959717
 script = ExtResource("1_kikvd")
-card_name = "LOREM IPSUM DOLOR SIT AMET"
-condension = 3
-card_description = "1d6  Takkura takes 1d8 persistent fire damage and 1d8 cold damage."
+card_name = "flaming boots"
+card_cost = "2"
+card_category = "spell 2"
+card_traits = Array[String](["healing", "vitality", "rare", "manipulate", "concentrate"])
+card_traditions = Array[String]([])
+card_range = ""
+card_frequency = "Once per day"
+card_defense = "Basic Reflex"
+card_duration = "Up to 1 minute"
+card_description = "With a sudden kick, you conjure a dense ball of flame at your feet. The ball lasts for one minute, after which it sizzles out. This counts as a 2nd-rank Floating Flame spell, but doesn't have the Concentrate trait. You can Dismiss the ball by stomping on it as an Interact action with the MOVE trait.
+
+As part of the activation and as a 1-action Interact activity henceforth, you can kicik the ball up to 30 feet in any direction, and it is affecte by gravity normally. Any creature or object in the ball's path takes 3d6 fire damage on a basic Reflex save. A creature can take this damage only once per round.
+
+If at the end of your turn the ball is in water, it produces steaming fog in a 5-foot emmanation, providing concealment, and loses one extra round of duration."
 card_heightened = Dictionary[String, String]({})
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1219346354]
@@ -42,6 +54,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(1, 0, 0, 1)
+
+[node name="Rarity" type="Polygon2D" parent="." unique_id=26754298]
+color = Color(0, 1, 1, 1)
 
 [node name="Background" type="Polygon2D" parent="." unique_id=1595980715]
 polygon = PackedVector2Array(30, 90, 30, 1063, 680, 1063, 680, 30, 385, 30, 325, 90)
@@ -124,13 +139,14 @@ theme_override_constants/margin_top = -3
 layout_mode = 2
 theme_override_colors/default_color = Color(0.6, 0.6, 0.6, 1)
 theme_override_fonts/normal_font = ExtResource("6_b4rk6")
+theme_override_fonts/bold_font = ExtResource("6_b4rk6")
 theme_override_font_sizes/normal_font_size = 33
+theme_override_font_sizes/bold_font_size = 33
 bbcode_enabled = true
 text = "AMET CONSECTETUR ADIPISCING ELIT"
 fit_content = true
 scroll_active = false
-horizontal_alignment = 3
-justification_flags = 42
+justification_flags = 35
 
 [node name="TraitsSep" type="HSeparator" parent="Content/VBoxContainer" unique_id=1138471266]
 layout_mode = 2
@@ -196,3 +212,25 @@ layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
 texture = ExtResource("7_pjytt")
+
+[node name="MouseTracker" parent="." unique_id=521258117 instance=ExtResource("8_b4rk6")]
+
+[node name="IconManager" type="Control" parent="." unique_id=1307033524]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Traits" type="Control" parent="IconManager" unique_id=348338622]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Description" type="Control" parent="IconManager" unique_id=83399567]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Heightened" type="Control" parent="IconManager" unique_id=730880254]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0

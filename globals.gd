@@ -8,13 +8,13 @@ var damage_types: Array[String] = [
 func load_json_file(file_path: String) -> Variant:
 	# Check if the file exists before opening
 	if not FileAccess.file_exists(file_path):
-		print("File does not exist: ", file_path)
+		#print("File does not exist: ", file_path)
 		return null
 	
 	# Open the file in read mode
 	var file = FileAccess.open(file_path, FileAccess.READ)
 	if not file:
-		print("Failed to open file: ", FileAccess.get_open_error())
+		#print("Failed to open file: ", FileAccess.get_open_error())
 		return null
 		
 	# Read the entire file content as a text string
@@ -25,7 +25,7 @@ func load_json_file(file_path: String) -> Variant:
 	var data = JSON.parse_string(json_string)
 	
 	if data == null:
-		print("Failed to parse JSON string.")
+		#print("Failed to parse JSON string.")
 		return null
 		
 	return data
@@ -109,7 +109,7 @@ enum STREAM {
 	MEM_BOLD,
 	MEM_REG
 }
-func color_content_pro(text: String, lookup: Dictionary) -> Dictionary:
+func color_content_pro(text: String, lookup: Dictionary, placeholder: String) -> Dictionary:
 	var words: Array = _split_into_words(text)
 	var re_number: RegEx = RegEx.create_from_string("[0-9]+d{0,1}[0-9]*")
 
@@ -120,20 +120,33 @@ func color_content_pro(text: String, lookup: Dictionary) -> Dictionary:
 	var timer: int = 0
 	var arr: Array = []
 
-	for w in words:
+	for i in range(len(words)):
+		var w: String = words[i]
 		var word: String = w.to_lower()
-		#print("In:  %s "%w + "(%d) = "%pointer + "...%s"%streams[pointer].substr(max(0, streams[pointer].length() - 30)))
-
-		if re_number.search(w) != null:
+		##print("In:  %s "%w + "(%d) = "%pointer + "...%s"%streams[pointer].substr(max(0, streams[pointer].length() - 30)))
+		
+		if word[0] == ".":
 			if pointer != STREAM.OUTPUT:
 				streams[STREAM.OUTPUT] += "[b][color=#%s]"%color + streams[STREAM.MEM_BOLD] + "[/color][/b]" + streams[STREAM.MEM_REG]
 				streams[STREAM.MEM_BOLD] = ""
 				streams[STREAM.MEM_REG] = ""
 				color = "000000"
+				pointer = STREAM.OUTPUT
+
+		if re_number.search(w) != null:
+			if i+1 < len(words) and words[i+1][0] == "-":
+				streams[pointer] += w
 				
-			streams[STREAM.MEM_BOLD] += w
-			pointer = STREAM.MEM_REG
-			timer = 0
+			else:
+				if pointer != STREAM.OUTPUT:
+					streams[STREAM.OUTPUT] += "[b][color=#%s]"%color + streams[STREAM.MEM_BOLD] + "[/color][/b]" + streams[STREAM.MEM_REG]
+					streams[STREAM.MEM_BOLD] = ""
+					streams[STREAM.MEM_REG] = ""
+					color = "000000"
+					
+				streams[STREAM.MEM_BOLD] += w
+				pointer = STREAM.MEM_REG
+				timer = 0
 			
 
 		elif word in damage_types:
@@ -145,12 +158,15 @@ func color_content_pro(text: String, lookup: Dictionary) -> Dictionary:
 				pointer = STREAM.MEM_BOLD
 
 			if pointer == STREAM.OUTPUT:
-				streams[pointer] += "[b][color=#%s]"%lookup[word] + w.to_upper() + "[/color][/b]"
+				streams[pointer] += "[b][color=#%s]"%lookup[word] + placeholder + w.to_upper() + "[/color][/b]"
+				arr.append("res://Data/Tags/%s.png"%word)
+				
+				#arr.append("res://Data/Tags/%s.png"%word)
 				color = "000000"
 			else:
-				streams[pointer] += "[img=32]icon.svg[/img]$"%word + w
-				arr.append("res://Data/Icons/%s.png"%word)
-			pointer = STREAM.MEM_REG
+				streams[pointer] += placeholder + w
+				arr.append("res://Data/Tags/%s.png"%word)
+				pointer = STREAM.MEM_REG
 			
 		elif word == "damage" and pointer != STREAM.OUTPUT:
 			streams[STREAM.MEM_REG] += w
@@ -163,9 +179,9 @@ func color_content_pro(text: String, lookup: Dictionary) -> Dictionary:
 			color = "000000"
 
 		elif word in lookup.keys():
-			streams[pointer] += "[img=32]res://icon.svg[/img]$[b][color=#%s]"%lookup[word] + w.to_upper() + "[/color][/b]"
+			streams[pointer] += "[b][color=#%s]"%lookup[word] + placeholder + w.to_upper() + "[/color][/b]"
 			color = "000000"
-			arr.append("res://Data/Icons/%s.png"%word)
+			arr.append("res://Data/Tags/%s.png"%word)
 
 		else:
 			streams[pointer] += w
@@ -182,7 +198,7 @@ func color_content_pro(text: String, lookup: Dictionary) -> Dictionary:
 			color = "000000"
 			
 			
-		#print("Out: %s "%w + "(%d) = "%pointer + "...%s"%streams[pointer].substr(max(0, streams[pointer].length() - 30))+"\n")
+		##print("Out: %s "%w + "(%d) = "%pointer + "...%s"%streams[pointer].substr(max(0, streams[pointer].length() - 30))+"\n")
 			
 
 	if streams[STREAM.MEM_BOLD]:
@@ -190,140 +206,123 @@ func color_content_pro(text: String, lookup: Dictionary) -> Dictionary:
 	if streams[STREAM.MEM_REG]:
 		streams[STREAM.OUTPUT] += streams[STREAM.MEM_REG]
 
-	return {"text": streams[STREAM.OUTPUT], "icons": arr}
-
-var test_text: String = """You're surrounded by orchestral music that shifts and changes to match your behavior.
-This music provides a +1 status bonus to Performance checks. At the GM's discretion, it provides this bonus to Deception, Diplomacy, and Intimidation checks as the music changes to support you in social situations, though some creatures are unaffected by such obvious attempts to use music to illicit specific emotions.
-This music moves with you and has a maximum volume equal to four humans shouting. You take a –4 penalty to Stealth checks while the music is playing. You can't control the exact music this spell creates. The music doesn't create intelligible words or singing. You can Dismiss this spell."""
-
-func replace_and_find_dollars(text: String, replacement: String) -> Dictionary:
-	var indices: Array[int] = []
-	var search_index: int = 0
-	
-	# Find all indices of "$" in the original string
-	while true:
-		search_index = text.find("$", search_index)
-		if search_index == -1:
-			break
-		indices.append(search_index)
-		search_index += 1
-		
-	# Replace all instances of "$" with the new character
-	var new_text: String = text.replace("$", replacement)
-	
-	return {
-		"new_text": new_text,
-		"indices": indices
-	}
-
-func overlay_images(label: RichTextLabel, icons: Array) -> void:
-	print("Called!")
-	
-	# Retrieve the default font and size to calculate substring widths
-	var font: Font = label.get_theme_font("normal_font")
-	var font_size: int = label.get_theme_font_size("normal_font_size")
-	
-	# get_parsed_text() strips BBCode tags, giving us the raw string the user actually sees
-	var plain_text: String = label.get_parsed_text()
-	var indices: Array[int] = []
-	var search_index: int = 0
-	
-	# Find all indices of "$" in the original string
-	while true:
-		search_index = plain_text.find("$", search_index)
-		if search_index == -1:
-			break
-		indices.append(search_index - len(indices) - 1)
-		search_index += 1
-	
-	label.text = label.text.replace("$", "")
-	plain_text = label.get_parsed_text()
-		
-	var text_length: int = plain_text.length()
-	
-	# Extract margins to calculate the true usable width of the label
-	var style: StyleBox = null
-	if label.has_theme_stylebox("normal"):
-		style = label.get_theme_stylebox("normal")
-		
-	var margin_left: float = style.get_margin(SIDE_LEFT) if style else 0.0
-	var margin_right: float = style.get_margin(SIDE_RIGHT) if style else 0.0
-	var margin_top: float = style.get_margin(SIDE_TOP) if style else 0.0
-	
-	var line_separation: int = label.get_theme_constant("line_separation")
-	var line_height: float = font.get_height(font_size) + line_separation
-	var usable_width: float = label.size.x - margin_left - margin_right
-	
-	
-	for i in range(len(icons)):
-		var index: int = indices[i]
-		var filepath: String = icons[i]
-		
-		print(index,"\t", filepath, "\t", plain_text[index])
-		
-		if index < 0 or index >= text_length:
-			continue
-			
-		var line_idx: int = label.get_character_line(index)
-		
-		# 1. Isolate the exact start and end of this visual line
-		var line_start: int = index
-		while line_start > 0 and label.get_character_line(line_start - 1) == line_idx:
-			line_start -= 1
-			
-		var line_end: int = index
-		while line_end < text_length and label.get_character_line(line_end) == line_idx:
-			line_end += 1
-			
-		var line_text: String = plain_text.substr(line_start, line_end - line_start)
-		
-		# 2. Determine if this is the end of a paragraph (Godot doesn't justify paragraph-ending lines)
-		var is_last_line: bool = false
-		if line_end == text_length:
-			is_last_line = true
-		elif plain_text.substr(line_end - 1, 1) == "\n" or plain_text.substr(line_end, 1) == "\n":
-			is_last_line = true
-			
-		# 3. Calculate the justified stretch factor per space algebraically
-		var stretch_per_space: float = 0.0
-		if not is_last_line:
-			# Strip trailing whitespace; the TextServer ignores it for justification alignments
-			var visual_line_text: String = line_text.rstrip(" \t\n\r")
-			var num_spaces: int = visual_line_text.count(" ")
-			
-			if num_spaces > 0:
-				var natural_width: float = font.get_string_size(visual_line_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-				if usable_width > natural_width:
-					stretch_per_space = (usable_width - natural_width) / float(num_spaces)
-					
-		# 4. Calculate exact X position by evaluating the substring before the target index
-		var text_before_target: String = plain_text.substr(line_start, index - line_start)
-		var natural_x_pos: float = font.get_string_size(text_before_target, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		
-		var x_pos: float = natural_x_pos + (text_before_target.count(" ") * stretch_per_space) + margin_left
-		
-		# 5. Calculate Y position based on line index 
-		var y_pos: float = margin_top + (line_idx * line_height) + font.get_ascent(font_size) - 16.0
-		
-		# 6. Instantiate and position the image
-		var img: Image = Image.new()
-		var err: Error = img.load(filepath)
-		if err != OK:
-			push_warning("Failed to load image at: %s" % filepath)
-			continue
-			
-		img.resize(32, 32, Image.INTERPOLATE_BILINEAR)
-		var texture: ImageTexture = ImageTexture.create_from_image(img)
-		
-		var texture_rect: TextureRect = TextureRect.new()
-		texture_rect.texture = texture
-		texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		texture_rect.position = Vector2(x_pos, y_pos)
-		print(x_pos, "\t", y_pos)
-		
-		label.add_child(texture_rect)
+	return {"text": streams[STREAM.OUTPUT].replace("[b][color=#000000][/color][/b]", ""), "icons": arr}
 
 
 func _ready() -> void:
 	trait_colors = load_json_file("res://Data/trait_colors.json")
-	print(len(trait_colors.keys()))
+
+
+## ------------------------------------------------------------------
+## Returns the RichTextLabel's persistent CharPositionRecorder,
+## creating and installing it only the first time it's needed.
+## Re-installing a new effect on every call was the bug: RichTextLabel
+## resolves the [reclocpos] tag to whichever effect first claimed it,
+## so later recorder instances were silently never invoked.
+## ------------------------------------------------------------------
+func _get_or_create_recorder(rtl: RichTextLabel) -> CharPositionRecorder:
+	var existing = rtl.get_meta("_char_position_recorder", null)
+	if existing != null and is_instance_valid(existing):
+		return existing
+
+	var recorder := CharPositionRecorder.new()
+	rtl.install_effect(recorder)
+	rtl.set_meta("_char_position_recorder", recorder)  # stash it on the node itself
+	return recorder
+
+## ------------------------------------------------------------------
+## 2) Finds every occurrence of `substring` and returns its screen-space
+##    Rect2 bounds. Handles BBCode ([b], [color], ...) and justification
+##    (Kashida, Word Bound, Skip Last Line) because it reads positions
+##    straight off the actual shaped/justified layout instead of
+##    computing them itself.
+##
+## Must be awaited — it needs one draw pass to populate character
+## positions:
+##     var rects = await find_substring_screen_positions(rtl, "foo")
+## ------------------------------------------------------------------
+func find_substring_screen_positions(rtl: RichTextLabel, substring: String) -> Array[Rect2]:
+	var results: Array[Rect2] = []
+	if substring.is_empty():
+		#print("Case 1: ", results)
+		return results
+
+	# --- Step 1: locate matches in the RENDERED (tag-stripped) text ---
+	#print("> Step 1")
+	var full_text: String = rtl.get_parsed_text()
+	var match_starts: Array[int] = []
+	var search_start := 0
+	while true:
+		var found := full_text.find(substring, search_start)
+		if found == -1:
+			break
+		match_starts.append(found)
+		search_start = found + 1  # overlap-permissive; use + substring.length() to disallow
+
+	if match_starts.is_empty():
+		#print("Case 2: ", results)
+		return results
+
+	# --- Reuse the same recorder every time, and wipe stale data ---
+	var recorder := _get_or_create_recorder(rtl)
+	recorder.char_positions.clear()  # discard positions from any earlier run
+
+	var original_bbcode: String = rtl.text
+	rtl.text = "[reclocpos]" + original_bbcode + "[/reclocpos]"
+
+	rtl.queue_redraw()
+	await rtl.get_tree().process_frame
+	await rtl.get_tree().process_frame
+
+	rtl.text = original_bbcode
+	var canvas_xform: Transform2D = rtl.get_global_transform_with_canvas()
+	var font: Font = rtl.get_theme_font("normal_font")
+	var font_size: int = rtl.get_theme_font_size("normal_font_size")
+	var line_height: float = font.get_height(font_size) if font else 20.0
+
+	for start_index in match_starts:
+		#print("start_index = ", start_index)
+		var line_groups: Dictionary = {}   # rounded_y -> Array of x positions
+		var ordered_ys: Array[float] = []
+
+		for i in range(substring.length()):
+			#print("i = ", i)
+			var idx := start_index + i
+			if not recorder.char_positions.has(idx):
+				#print("recorder", recorder.char_positions)
+				continue
+			var pos: Vector2 = recorder.char_positions[idx]
+			var y_key := snappedf(pos.y, 0.01)  # group characters on the same line
+
+			if not line_groups.has(y_key):
+				line_groups[y_key] = []
+				ordered_ys.append(y_key)
+			line_groups[y_key].append(pos.x)
+
+		ordered_ys.sort()
+
+		for y_key in ordered_ys:
+			#print("y_key = ", y_key)
+			var xs: Array = line_groups[y_key]
+			xs.sort()
+			var left: float = xs[0]
+			var right: float = xs[xs.size() - 1]
+
+			# Use the position of the very next character (if on the same
+			# line) as the right edge — gives an exact width with no font
+			# metrics guesswork.
+			var last_char_index: int = start_index + substring.length() - 1
+			if recorder.char_positions.has(last_char_index + 1):
+				var next_pos: Vector2 = recorder.char_positions[last_char_index + 1]
+				if is_equal_approx(snappedf(next_pos.y, 0.01), y_key):
+					right = next_pos.x
+			if right <= left and font:
+				right = left + font.get_string_size("M", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+
+			var local_rect := Rect2(Vector2(left, y_key), Vector2(right - left, line_height))
+			var top_left: Vector2 = canvas_xform * local_rect.position
+			var bottom_right: Vector2 = canvas_xform * (local_rect.position + local_rect.size)
+			results.append(Rect2(top_left, bottom_right - top_left))
+
+	#print("Case 3: ", results)
+	return results

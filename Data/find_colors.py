@@ -1,5 +1,6 @@
 from PIL import Image
 import json
+import os
 
 def rgb_to_hex(r, g, b):
     """Converts RGB values to a 6-character hex string."""
@@ -59,6 +60,11 @@ def get_icon_colors(image_path, names_path):
     return trait_colors
 
 def split_icons(image_path, output_dir, names_path):
+    for fname in os.listdir(output_dir):
+        file_path = os.path.join(output_dir, fname)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
     # Load the names from the text file
     with open(names_path, 'r') as f:
         names = [line.strip() for line in f if line.strip()]
@@ -87,6 +93,41 @@ def split_icons(image_path, output_dir, names_path):
         output_path = f"{output_dir}/{name}.png"
         cell.save(output_path)
 
+
+def split_icon_images(image_path, output_dir, names_path, margin=14):
+    for fname in os.listdir(output_dir):
+        file_path = os.path.join(output_dir, fname)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
+    # Load the names from the text file
+    with open(names_path, 'r') as f:
+        names = [line.strip() for line in f if line.strip()]
+
+    # Open the image and ensure it's in RGBA mode for transparency support
+    img = Image.open(image_path).convert("RGBA")
+    width, height = img.size
+    
+    # Calculate the dimensions of each cell in the 10x10 grid
+    cols, rows = 10, 10
+    cell_w = width // cols
+    cell_h = height // rows
+
+    for i, name in enumerate(names):
+        col = i % cols
+        row = i // cols
+        
+        # Crop the image to the specific grid section for the current icon
+        left = col * cell_w + margin
+        top = row * cell_h + margin
+        right = (col + 1) * cell_w - margin
+        bottom = (row + 1) * cell_h - margin
+        cell = img.crop((left, top, right, bottom))
+        
+        # Save the cropped icon to the output directory with the name as filename
+        output_path = f"{output_dir}/{name}.png"
+        cell.save(output_path)
+
 if __name__ == "__main__":
     image_file = "Data/trait-icons.png"
     names_file = "Data/traits.txt"
@@ -104,6 +145,7 @@ if __name__ == "__main__":
             json.dump(colors_dict, f, indent=4)
 
         split_icons(image_file, "Data/Icons", names_file)
+        split_icon_images(image_file, "Data/Tags", names_file, margin=14)
         
     except FileNotFoundError as e:
         print(f"Error: {e}. Please ensure '{image_file}' and '{names_file}' are in the directory.")

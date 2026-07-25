@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://c4eshrkrngbmv"]
+
+[ext_resource type="Script" uid="uid://cna3kdr8cll7y" path="res://mouse_tracker.gd" id="1_qdxr0"]
+
+[node name="MouseTracker" type="Marker2D" unique_id=1060612503]
+script = ExtResource("1_qdxr0")
+
+[node name="Label" type="Label" parent="." unique_id=431203382]
+offset_left = -46.0
+offset_top = -37.0
+offset_right = 47.0
+offset_bottom = -14.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5058824)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 24
+text = "(x,y)"
+horizontal_alignment = 1
+vertical_alignment = 2
