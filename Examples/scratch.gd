@@ -498,3 +498,40 @@ func get_character_position(paragraph: TextParagraph, char_index: int) -> Vector
 		
 	# Fallback if the index is out of bounds
 	return Vector2.ZERO
+
+
+
+func parse_many_cards(json_string: String) -> void:
+	var card_list = JSON.parse_string(json_string)
+	
+	if typeof(card_list) != TYPE_ARRAY:
+		push_error("Failed to parse JSON string or JSON is not an Array.")
+		return
+		
+	var current_page: int = 1
+	var card_index: int = 1
+
+	_hide_all_cards()
+
+	for card_data in card_list:
+		var card: Card = get_node("GridContainer/Card" + str(card_index))
+		card.show()
+		parse_json(card_data, card)
+		await get_tree().process_frame
+		
+		if card_index == 9:
+			await save_to_image(current_page)
+			current_page += 1
+			card_index = 1
+			_hide_all_cards()
+		else:
+			card_index += 1
+			
+	if card_index > 1:
+		await save_to_image(current_page)
+
+func _on_button_pressed() -> void:
+	await save_to_image(99)
+
+func _on_button_2_pressed() -> void:
+	parse_many_cards(test_multicard_string)

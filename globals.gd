@@ -1,9 +1,91 @@
 extends Node
+class_name GlobalClasses
+
+enum ActivityCost {
+	ONE_ACTION,
+	TWO_ACTIONS,
+	THREE_ACTIONS,
+	REACTION,
+	FREE_ACTION,
+	ONE_MINUTE,
+	TEN_MINUTES,
+	ONE_HOUR,
+	ONE_OR_MORE_ACTIONS,
+	TWO_OR_MORE_ACTIONS
+}
+
+enum CardType {
+	ATTACK,
+	HEALING,
+	MOVEMENT,
+	BUFF,
+	DEBUFF,
+	UTILITY,
+	SOCIAL
+}
+
+const TYPE_COLORS: Dictionary = {
+	CardType.ATTACK: Color("a12c22"),
+	CardType.HEALING: Color("52a25e"),
+	CardType.MOVEMENT: Color("ddb726"),
+	CardType.BUFF: Color("35bfd1"),
+	CardType.DEBUFF: Color("662d91"),
+	CardType.UTILITY: Color("625147"),
+	CardType.SOCIAL: Color("f065a5")
+}
+
+const ACTIVITY_COST: Dictionary = {
+	ActivityCost.ONE_ACTION: "1",
+	ActivityCost.TWO_ACTIONS: "2",
+	ActivityCost.THREE_ACTIONS: "3",
+	ActivityCost.REACTION: "R",
+	ActivityCost.FREE_ACTION: "F",
+	ActivityCost.ONE_MINUTE: "M",
+	ActivityCost.TEN_MINUTES: "X",
+	ActivityCost.ONE_HOUR: "H",
+	ActivityCost.ONE_OR_MORE_ACTIONS: "B",
+	ActivityCost.TWO_OR_MORE_ACTIONS: "C"
+}
 
 var trait_colors: Dictionary = {}
 var damage_types: Array[String] = [
-	"fire", "sonic", "electricity", "cold", "void", "vitality", "spirit", "holy", "unholy", "bludgeoning", "piercing", "slashing", "physical", "bleed", "precision", "acid", "poison", "force", "mental"
+	"fire",
+	"sonic",
+	"electricity",
+	"cold",
+	"void",
+	"vitality",
+	"spirit",
+	"holy",
+	"unholy",
+	"bludgeoning",
+	"piercing",
+	"slashing",
+	"physical",
+	"bleed",
+	"precision",
+	"acid",
+	"poison",
+	"force",
+	"mental"
 ]
+
+# Fonts
+const font_fname: String = "res://Fonts/GoodPro/GoodPro-"
+@onready var font_cond0_reg:  Font = preload(font_fname + "Regular.otf")
+@onready var font_cond1_reg:  Font = preload(font_fname + "Narr.otf")
+@onready var font_cond2_reg:  Font = preload(font_fname + "Cond.otf")
+@onready var font_cond3_reg:  Font = preload(font_fname + "XCond.otf")
+@onready var font_cond0_bold: Font = preload(font_fname + "Bold.otf")
+@onready var font_cond1_bold: Font = preload(font_fname + "NarrBold.otf")
+@onready var font_cond2_bold: Font = preload(font_fname + "CondBold.otf")
+@onready var font_cond3_bold: Font = preload(font_fname + "XCondBold.otf")
+
+@onready var fonts_regular: Array[Font] = [
+	font_cond0_reg,  font_cond1_reg,  font_cond2_reg,  font_cond3_reg]
+@onready var fonts_bold: 	Array[Font] = [
+	font_cond0_bold, font_cond1_bold, font_cond2_bold, font_cond3_bold]
+
 
 func load_json_file(file_path: String) -> Variant:
 	# Check if the file exists before opening

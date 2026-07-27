@@ -5,36 +5,8 @@ var is_ready: bool = false
 func _ready():
 	is_ready = true
 	_update_card_visuals()
-	
-const font_fname: String = "res://Fonts/GoodPro/GoodPro-"
-const TYPE_COLORS: Dictionary = {
-	CardType.ATTACK: Color("a12c22"),
-	CardType.HEALING: Color("52a25e"),
-	CardType.MOVEMENT: Color("ddb726"),
-	CardType.BUFF: Color("35bfd1"),
-	CardType.DEBUFF: Color("662d91"),
-	CardType.UTILITY: Color("625147"),
-	CardType.SOCIAL: Color("f065a5")
-}
-enum ActivityCost {A,AA,AAA,F,R,}
-enum CardType {
-	ATTACK,
-	HEALING,
-	MOVEMENT,
-	BUFF,
-	DEBUFF,
-	UTILITY,
-	SOCIAL
-}
 
-@onready var font_cond0_bold: Font = preload(font_fname + "Bold.otf")
-@onready var font_cond1_bold: Font = preload(font_fname + "NarrBold.otf")
-@onready var font_cond2_bold: Font = preload(font_fname + "CondBold.otf")
-@onready var font_cond3_bold: Font = preload(font_fname + "XCondBold.otf")
-@onready var fonts_bold: 	Array[Font] = [
-	font_cond0_bold, font_cond1_bold, font_cond2_bold, font_cond3_bold]
-
-@export var card_type: CardType = CardType.ATTACK:
+@export var card_type: GlobalClasses.CardType = Globals.CardType.UTILITY:
 	set(value):
 		card_type = value
 		_update_card_visuals()
@@ -42,7 +14,7 @@ enum CardType {
 	set(value):
 		card_name = value
 		_update_card_visuals()
-@export var card_cost: String = "1":
+@export var card_cost: GlobalClasses.ActivityCost = Globals.ActivityCost.ONE_ACTION:
 	set(value):
 		card_cost = value
 		_update_card_visuals()
@@ -50,7 +22,7 @@ enum CardType {
 	set(value):
 		card_category = value
 		_update_card_visuals()
-@export var card_traits: Array[String] = ["Attack", "Concentrate", "Manipulate"]:
+@export var card_traits: Array[String] = []:
 	set(value):
 		card_traits = []
 		for s in value:
@@ -81,8 +53,8 @@ func _update_card_visuals() -> void:
 	if not is_ready:
 		return
 		
-	$Background.color = TYPE_COLORS[card_type]
-	$Content/VBoxContainer/Actions.text = card_cost
+	$Background.color = Globals.TYPE_COLORS[card_type]
+	$Content/VBoxContainer/Actions.text = Globals.ACTIVITY_COST[card_cost]
 	$Content/VBoxContainer/Name.text = card_name
 	$Content/VBoxContainer/Category.text = card_category
 	
@@ -157,15 +129,55 @@ func _load_trait_pictures(directory: String = "res://Data/Icons/", filter_no_ico
 	var guide: Dictionary = _assign_rows(filtered_card_traits)
 	for trait_name in guide.keys():
 		var filepath: String = directory + trait_name + ".png"
-		var img: Image = Image.new()
-		var err: Error = img.load(filepath)
-		if err != OK:
-			push_warning("Failed to load image at: %s" % filepath)
-			continue
+		#var img: Image = Image.new()
+		#var err: Error = img.load(filepath)
+		#if err != OK:
+			#push_warning("Failed to load image at: %s" % filepath)
+			#continue
 			
-		var texture: ImageTexture = ImageTexture.create_from_image(img)
+		#var texture: ImageTexture = ImageTexture.create_from_image(img)
 		var texture_rect: TextureRect = TextureRect.new()
-		texture_rect.texture = texture
+		texture_rect.texture = load(filepath)
 		texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		
 		rows[guide[trait_name]].add_child(texture_rect)
+
+
+func from_json_string(json_str: String) -> void:
+	var data = JSON.parse_string(json_str)
+	
+	if not data is Dictionary:
+		push_error("Failed to parse Card data: Invalid JSON or not a JSON Object.")
+		return
+
+	# Direct assignments with safe fallbacks
+	card_name = data.get("card_name", "Activity")
+	card_category = data.get("card_category", "Basic")
+	var card_type_aux = data.get("card_type", "UTILITY")
+	if card_type_aux in Globals.CardType.keys():
+		card_type = Globals.CardType[card_type_aux]
+	else:
+		card_type = Globals.CardType["UTILITY"]
+	card_name = data.get("card_name", "Activity")
+	var card_cost_aux = data.get("card_cost", "ONE_ACTION")
+	if card_cost_aux in Globals.ActivityCost.keys():
+		card_cost = Globals.ActivityCost[card_cost_aux]
+	else:
+		card_cost = Globals.ActivityCost["ONE_ACTION"]
+	
+	# Safely cast Untyped Arrays from JSON to Array[String]
+	if data.has("card_traits") and data["card_traits"] is Array:
+		var temp_traits: Array[String] = []
+		for item in data["card_traits"]:
+			temp_traits.append(str(item))
+		card_traits = temp_traits
+		
+
+	_update_card_visuals()
+
+
+func _show():
+	$White.hide()
+	
+func _hide():
+	$White.show()

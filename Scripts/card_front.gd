@@ -1,52 +1,11 @@
 extends Control # Change to Node2D or your specific base node
 class_name CardFront
 
-const font_fname: String = "res://Fonts/GoodPro/GoodPro-"
 const spacer: String = "|"
-const TYPE_COLORS: Dictionary = {
-	CardType.ATTACK: Color("a12c22"),
-	CardType.HEALING: Color("52a25e"),
-	CardType.MOVEMENT: Color("ddb726"),
-	CardType.BUFF: Color("35bfd1"),
-	CardType.DEBUFF: Color("662d91"),
-	CardType.UTILITY: Color("625147"),
-	CardType.SOCIAL: Color("f065a5")
-}
-const ACTIVITY_COST: Dictionary = {
-	ActivityCost.A: "1",
-	ActivityCost.AA: "2",
-	ActivityCost.AAA: "3",
-	ActivityCost.F: "F",
-	ActivityCost.R: "R"
-}
 const placeholder: String = "JJII"
-enum ActivityCost {A,AA,AAA,F,R,}
-enum CardType {
-	ATTACK,
-	HEALING,
-	MOVEMENT,
-	BUFF,
-	DEBUFF,
-	UTILITY,
-	SOCIAL
-}
+signal finished_rendering
 
 @onready var is_ready: bool = true
-
-# Fonts
-@onready var font_cond0_reg:  Font = preload(font_fname + "Regular.otf")
-@onready var font_cond1_reg:  Font = preload(font_fname + "Narr.otf")
-@onready var font_cond2_reg:  Font = preload(font_fname + "Cond.otf")
-@onready var font_cond3_reg:  Font = preload(font_fname + "XCond.otf")
-@onready var font_cond0_bold: Font = preload(font_fname + "Bold.otf")
-@onready var font_cond1_bold: Font = preload(font_fname + "NarrBold.otf")
-@onready var font_cond2_bold: Font = preload(font_fname + "CondBold.otf")
-@onready var font_cond3_bold: Font = preload(font_fname + "XCondBold.otf")
-
-@onready var fonts_regular: Array[Font] = [
-	font_cond0_reg,  font_cond1_reg,  font_cond2_reg,  font_cond3_reg]
-@onready var fonts_bold: 	Array[Font] = [
-	font_cond0_bold, font_cond1_bold, font_cond2_bold, font_cond3_bold]
 
 # Nodes
 @onready var label: 			Label = 			$Header/MarginContainerName/Name
@@ -63,7 +22,7 @@ enum CardType {
 
 # Exports
 @export var card_size: Vector2 = Vector2(710, 1093)
-@export var card_type: CardType = CardType.ATTACK:
+@export var card_type: GlobalClasses.CardType = Globals.CardType.UTILITY:
 	set(value):
 		card_type = value
 		_update_card_visuals() # Updates the color automatically when changed
@@ -72,7 +31,7 @@ enum CardType {
 		card_name = value
 		_update_card_visuals()
 		_recalculate_header_constants()
-@export var card_cost: String = "1":
+@export var card_cost: GlobalClasses.ActivityCost = Globals.ActivityCost.ONE_ACTION:
 	set(value):
 		card_cost = value
 		_update_card_visuals()
@@ -85,17 +44,17 @@ enum CardType {
 	set(value):
 		card_materials = value
 		_update_card_visuals()
-@export var card_traits: Array[String] = ["Attack", "Concentrate", "Manipulate"]:
+@export var card_traits: Array[String] = []:
 	set(value):
 		card_traits = []
 		for s in value:
 			card_traits.append(s.to_lower())
 		_update_card_visuals()
-@export var card_traditions: Array[String] = ["Arcane", "Primal"]:
+@export var card_traditions: Array[String] = []:
 	set(value):
 		card_traditions = value
 		_update_card_visuals()
-@export var card_range: String = "60 feet":
+@export var card_range: String = "":
 	set(value):
 		card_range = value
 		_update_card_visuals()
@@ -103,7 +62,7 @@ enum CardType {
 	set(value):
 		card_frequency = value
 		_update_card_visuals()
-@export var card_targets: String = "1 creature":
+@export var card_targets: String = "":
 	set(value):
 		card_targets = value
 		_update_card_visuals()
@@ -111,11 +70,11 @@ enum CardType {
 	set(value):
 		card_area = value
 		_update_card_visuals()
-@export var card_defense: String = "Basic Fortitude":
+@export var card_defense: String = "":
 	set(value):
 		card_defense = value
 		_update_card_visuals()
-@export var card_duration: String = "Sustained":
+@export var card_duration: String = "":
 	set(value):
 		card_duration = value
 		_update_card_visuals()
@@ -127,20 +86,21 @@ enum CardType {
 	set(value):
 		card_trigger = value
 		_update_card_visuals()
-@export var condension: int = 0:
+@export var card_source: String = "Homebrewed":
 	set(value):
-		condension = value
+		card_source = value
 		_update_card_visuals()
-@export_multiline var card_description: String = """Lorem ipsum.\nDolor sit amet.""":
+@export_multiline var card_description: String = \
+"""Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam non cursus elit, eu tincidunt enim. Cras non ullamcorper tortor. Nam dictum massa id tortor lacinia rhoncus.
+Morbi eu dictum metus. Sed mauris leo, molestie fringilla mauris a, eleifend sollicitudin mauris. Nullam eleifend tempus vulputate. Donec ultricies facilisis metus.
+In faucibus, sapien et commodo pharetra, leo ante consequat mi, a luctus ipsum sem malesuada augue. Fusce quam ipsum, interdum sit amet interdum eu, finibus eu ante. Interdum et malesuada fames ac ante ipsum primis in faucibus. Etiam volutpat efficitur urna.""":
 	set(value):
 		var regex := RegEx.create_from_string("\n+")
 		var regex_clean_lists := RegEx.create_from_string("\n*(\\[\\/{0,1}[ou]l\\])\n*")
 		card_description = regex.sub(value, "\n", true)
 		card_description = regex_clean_lists.sub(card_description, "$1", true)
 		_update_card_visuals()
-@export var card_heightened: Dictionary[String, String] = {
-	"Heightened (+1)": """The damage increases by:\n[ol]\nFire: 1d4\nCold: 1d6[/ol]\n and the weakness on a critical failure increases by 1."""
-}:
+@export var card_heightened: Dictionary[String, String] = {}:
 	set(value):
 		var regex := RegEx.create_from_string("\n+")
 		var regex_clean_lists := RegEx.create_from_string("\n*(\\[\\/{0,1}[ou]l\\])\n*")
@@ -150,7 +110,6 @@ enum CardType {
 			txt = regex_clean_lists.sub(txt, "$1", true)
 			card_heightened.get_or_add(key, txt)
 		_update_card_visuals()
-@export_multiline var test: Dictionary[String, String] = {"Heightened (+1)": "YEAG"}
 
 # Metadata
 var left_bound: float = 0.0
@@ -173,7 +132,7 @@ func _recalculate_header_constants() -> void:
 	
 
 func get_type_color() -> Color:
-	return TYPE_COLORS[card_type]
+	return Globals.TYPE_COLORS[card_type]
 
 func _update_color() -> void:
 	$Margin.color = get_type_color()
@@ -208,9 +167,9 @@ func _update_header() -> void:
 	var slope_start: float = left_bound + slope_margin
 	
 	label.text = card_name
-	actions.text = card_cost
+	actions.text = Globals.ACTIVITY_COST[card_cost]
 	category.text = card_category
-	category.add_theme_font_override("font", font_cond1_bold)
+	category.add_theme_font_override("font", Globals.fonts_bold[1])
 	label.scale.x = 1.0
 	await _recalculate_header_constants()
 	
@@ -248,6 +207,8 @@ func _update_header() -> void:
 	rarity_poly[5] += Vector2(-px / 2, -px)
 	$Rarity.set("polygon", rarity_poly)
 	label.scale.x = sizing["scale_a"]
+	
+	print(name, "is updating it's visuals: ", sizing)
 
 func _update_parameters() -> void:
 	var param_string = ""
@@ -301,7 +262,7 @@ func _update_icons() -> void:
 			heightened_array.append("[b]" + key + ":[/b] " + card_heightened[key])
 		var heightened_raw: String = "\n".join(heightened_array)
 		data = await Globals.color_content_pro(heightened_raw, Globals.trait_colors, placeholder)
-		print(data)
+		#print(data)
 		heightened.text = data["text"]
 		icons = data["icons"]
 		set_icons($IconManager/Heightened, icons, heightened, placeholder)
@@ -331,11 +292,12 @@ func _sort_traits(a, b) -> bool:
 		
 	
 func _update_content() -> void:
+	$SourceMargin/Source.text = "Source: " + card_source
 	$Content/VBoxContainer.scale.y = 1.0
-	description.add_theme_font_override("bold_font", fonts_bold[0])
-	description.add_theme_font_override("normal_font", fonts_regular[0])
-	heightened.add_theme_font_override("bold_font", fonts_bold[0])
-	heightened.add_theme_font_override("normal_font", fonts_regular[0])
+	description.add_theme_font_override("bold_font", Globals.fonts_bold[0])
+	description.add_theme_font_override("normal_font", Globals.fonts_regular[0])
+	heightened.add_theme_font_override("bold_font", Globals.fonts_bold[0])
+	heightened.add_theme_font_override("normal_font", Globals.fonts_regular[0])
 	
 	if card_traits:
 		card_traits.sort_custom(_sort_traits)
@@ -347,7 +309,7 @@ func _update_content() -> void:
 		#traits.text = "   ".join(card_traits_colored)
 		var base_text: String = "   ".join(card_traits).to_upper()
 		var data: Dictionary = await Globals.color_content_pro(base_text, Globals.trait_colors, placeholder + "I")
-		print("TRAITS: ", data)
+		#print("TRAITS: ", data)
 		traits.text = data["text"]
 		traits.show()
 		traits_sep.show()
@@ -367,45 +329,47 @@ func _update_content() -> void:
 	await get_tree().process_frame
 	
 	var bottom_line: float = $Content/VBoxContainer/End.position.y
-	if bottom_line + 108.0 + 30.0 > size.y:
-		description.add_theme_font_override("bold_font", fonts_bold[1])
-		description.add_theme_font_override("normal_font", fonts_regular[1])
+	var bottom_margin: float = 45.0
+	
+	if bottom_line + 108.0 + bottom_margin > size.y:
+		description.add_theme_font_override("bold_font", Globals.fonts_bold[1])
+		description.add_theme_font_override("normal_font", Globals.fonts_regular[1])
 		await get_tree().process_frame
 		await _update_icons()
 		bottom_line = $Content/VBoxContainer/End.position.y
-	if bottom_line + 108.0 + 30.0 > size.y:
-		heightened.add_theme_font_override("bold_font", fonts_bold[1])
-		heightened.add_theme_font_override("normal_font", fonts_regular[1])
+	if bottom_line + 108.0 + bottom_margin > size.y:
+		heightened.add_theme_font_override("bold_font", Globals.fonts_bold[1])
+		heightened.add_theme_font_override("normal_font", Globals.fonts_regular[1])
 		await get_tree().process_frame
 		await _update_icons()
 		bottom_line = $Content/VBoxContainer/End.position.y
-	if bottom_line + 108.0 + 30.0 > size.y:
-		description.add_theme_font_override("bold_font", fonts_bold[2])
-		description.add_theme_font_override("normal_font", fonts_regular[2])
+	if bottom_line + 108.0 + bottom_margin > size.y:
+		description.add_theme_font_override("bold_font", Globals.fonts_bold[2])
+		description.add_theme_font_override("normal_font", Globals.fonts_regular[2])
 		await get_tree().process_frame
 		await _update_icons()
 		bottom_line = $Content/VBoxContainer/End.position.y
-	if bottom_line + 108.0 + 30.0 > size.y:
-		heightened.add_theme_font_override("bold_font", fonts_bold[2])
-		heightened.add_theme_font_override("normal_font", fonts_regular[2])
+	if bottom_line + 108.0 + bottom_margin > size.y:
+		heightened.add_theme_font_override("bold_font", Globals.fonts_bold[2])
+		heightened.add_theme_font_override("normal_font", Globals.fonts_regular[2])
 		await get_tree().process_frame
 		await _update_icons()
 		bottom_line = $Content/VBoxContainer/End.position.y
-	if bottom_line + 108.0 + 30.0 > size.y:
-		description.add_theme_font_override("bold_font", fonts_bold[3])
-		description.add_theme_font_override("normal_font", fonts_regular[3])
+	if bottom_line + 108.0 + bottom_margin > size.y:
+		description.add_theme_font_override("bold_font", Globals.fonts_bold[3])
+		description.add_theme_font_override("normal_font", Globals.fonts_regular[3])
 		await get_tree().process_frame
 		await _update_icons()
 		bottom_line = $Content/VBoxContainer/End.position.y
-	if bottom_line + 108.0 + 30.0 > size.y:
-		heightened.add_theme_font_override("bold_font", fonts_bold[3])
-		heightened.add_theme_font_override("normal_font", fonts_regular[3])
+	if bottom_line + 108.0 + bottom_margin > size.y:
+		heightened.add_theme_font_override("bold_font", Globals.fonts_bold[3])
+		heightened.add_theme_font_override("normal_font", Globals.fonts_regular[3])
 		await get_tree().process_frame
 		await _update_icons()
 		bottom_line = $Content/VBoxContainer/End.position.y
-	if bottom_line + 108.0 + 30.0 > size.y:
+	if bottom_line + 108.0 + bottom_margin > size.y:
 		var total_size: float = $Content/VBoxContainer.get_rect().size.y
-		var allowed_size: float = size.y - 108.0 - 30.0
+		var allowed_size: float = size.y - 108.0 - bottom_margin
 		$Content/VBoxContainer.scale.y = allowed_size / total_size
 		await _update_icons()
 			
@@ -414,7 +378,7 @@ func _update_content() -> void:
 @onready var paragraph: TextParagraph = TextParagraph.new()
 
 func set_icons(parent: Node, icons: Array, label: RichTextLabel, placeholder: String, reset: bool = true, separator: String = "") -> Array[TextureRect]:
-	print("Setting icons!")
+	#print("Setting icons!")
 	if reset:
 		for child in parent.get_children():
 			child.queue_free()
@@ -440,7 +404,7 @@ func set_icons(parent: Node, icons: Array, label: RichTextLabel, placeholder: St
 		var texture_rect: TextureRect = TextureRect.new()
 		texture_rect.texture = texture
 		texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		print("%s (%s): %s = "%[card_name, name, icons[i]], rects[i].position)
+		#print("%s (%s): %s = "%[card_name, name, icons[i]], rects[i].position)
 		
 		parent.add_child(texture_rect)
 		images.append(texture_rect)
@@ -456,3 +420,93 @@ func _update_card_visuals() -> void:
 	_update_header()
 	_update_content()
 	
+	finished_rendering.emit()
+	
+	
+func to_json_string() -> String:
+	var data: Dictionary = {
+		"card_type": Globals.CardType.keys()[card_type],
+		"card_name": card_name,
+		"card_cost": Globals.ActivityCost.keys()[card_cost],
+		"card_category": card_category,
+		"card_materials": card_materials,
+		"card_traits": card_traits,
+		"card_traditions": card_traditions,
+		"card_range": card_range,
+		"card_frequency": card_frequency,
+		"card_targets": card_targets,
+		"card_area": card_area,
+		"card_defense": card_defense,
+		"card_duration": card_duration,
+		"card_requirements": card_requirements,
+		"card_trigger": card_trigger,
+		"card_source": card_source,
+		"card_description": card_description,
+		"card_heightened": card_heightened
+	}
+	
+	# The "\t" argument pretty-prints the JSON. 
+	# Remove it if you want a minified string.
+	return JSON.stringify(data, "\t")
+
+func from_json_string(json_str: String) -> void:
+	var data = JSON.parse_string(json_str)
+	
+	if not data is Dictionary:
+		push_error("Failed to parse Card data: Invalid JSON or not a JSON Object.")
+		return
+
+	# Direct assignments with safe fallbacks
+	var card_type_aux = data.get("card_type", "UTILITY")
+	if card_type_aux in Globals.CardType.keys():
+		card_type = Globals.CardType[card_type_aux]
+	else:
+		card_type = Globals.CardType["UTILITY"]
+	card_name = data.get("card_name", "Activity")
+	var card_cost_aux = data.get("card_cost", "ONE_ACTION")
+	if card_cost_aux in Globals.ActivityCost.keys():
+		card_cost = Globals.ActivityCost[card_cost_aux]
+	else:
+		card_cost = Globals.ActivityCost["ONE_ACTION"]
+	card_category = data.get("card_category", "Basic")
+	card_materials = data.get("card_materials", "")
+	
+	# Safely cast Untyped Arrays from JSON to Array[String]
+	if data.has("card_traits") and data["card_traits"] is Array:
+		var temp_traits: Array[String] = []
+		for item in data["card_traits"]:
+			temp_traits.append(str(item))
+		card_traits = temp_traits
+		
+	if data.has("card_traditions") and data["card_traditions"] is Array:
+		var temp_traditions: Array[String] = []
+		for item in data["card_traditions"]:
+			temp_traditions.append(str(item))
+		card_traditions = temp_traditions
+
+	# Standard Strings
+	card_range = data.get("card_range", "")
+	card_frequency = data.get("card_frequency", "")
+	card_targets = data.get("card_targets", "")
+	card_area = data.get("card_area", "")
+	card_defense = data.get("card_defense", "")
+	card_duration = data.get("card_duration", "")
+	card_requirements = data.get("card_requirements", "")
+	card_trigger = data.get("card_trigger", "")
+	card_source = data.get("card_source", "Homebrewed")
+	card_description = data.get("card_description", "")
+	
+	# Safely cast Untyped Dictionary from JSON to Dictionary[String, String]
+	if data.has("card_heightened") and data["card_heightened"] is Dictionary:
+		var temp_dict: Dictionary[String, String] = {}
+		for key in data["card_heightened"].keys():
+			temp_dict[str(key)] = str(data["card_heightened"][key])
+		card_heightened = temp_dict
+
+	_update_card_visuals()
+
+func _show():
+	$White.hide()
+	
+func _hide():
+	$White.show()

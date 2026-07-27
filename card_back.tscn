@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bea4jjehyq1u3" path="res://Scripts/card_back.gd" id="1_rdhif"]
 [ext_resource type="Texture2D" uid="uid://b2tb3j4dpcq1w" path="res://Examples/card_back_example.png" id="2_a1nsi"]
-[ext_resource type="FontFile" uid="uid://bqktg2vej5rcj" path="res://Fonts/Pathfinder2eActions.ttf" id="3_e7hf5"]
+[ext_resource type="FontFile" uid="uid://dbyuvfuohdigv" path="res://Fonts/Pathfinder2eActions-Regular.otf" id="4_rdhif"]
 [ext_resource type="FontFile" uid="uid://caf4146jspiok" path="res://Fonts/GoodPro/GoodPro-CondBold.otf" id="5_vhgc4"]
 [ext_resource type="FontFile" uid="uid://c2hfq5m5hcvyo" path="res://Fonts/GoodPro/GoodPro-Bold.otf" id="6_mvpak"]
 [ext_resource type="PackedScene" uid="uid://c4eshrkrngbmv" path="res://mouse-tracker.tscn" id="8_t8ng5"]
@@ -15,10 +15,6 @@ anchor_bottom = 0.312
 offset_right = 0.7199707
 offset_bottom = -1.4959717
 script = ExtResource("1_rdhif")
-card_type = 2
-card_name = "stand"
-card_category = "basic"
-card_traits = Array[String](["move"])
 
 [node name="Base" type="TextureRect" parent="." unique_id=1219346354]
 layout_mode = 1
@@ -58,9 +54,10 @@ layout_mode = 2
 theme_override_constants/separation = -50
 
 [node name="Actions" type="Label" parent="Content/VBoxContainer" unique_id=557444708]
+custom_minimum_size = Vector2(0, 400)
 layout_mode = 2
 size_flags_vertical = 0
-theme_override_fonts/font = ExtResource("3_e7hf5")
+theme_override_fonts/font = ExtResource("4_rdhif")
 theme_override_font_sizes/font_size = 450
 text = "1"
 horizontal_alignment = 1
@@ -110,3 +107,12 @@ layout_mode = 2
 size_flags_vertical = 0
 theme_override_constants/separation = 6
 alignment = 1
+
+[node name="White" type="ColorRect" parent="." unique_id=286167985]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
