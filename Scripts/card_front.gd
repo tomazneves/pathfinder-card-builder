@@ -99,6 +99,7 @@ In faucibus, sapien et commodo pharetra, leo ante consequat mi, a luctus ipsum s
 		var regex_clean_lists := RegEx.create_from_string("\n*(\\[\\/{0,1}[ou]l\\])\n*")
 		card_description = regex.sub(value, "\n", true)
 		card_description = regex_clean_lists.sub(card_description, "$1", true)
+		set_description(value)
 		_update_card_visuals()
 @export var card_heightened: Dictionary[String, String] = {}:
 	set(value):
@@ -157,6 +158,16 @@ func _update_color() -> void:
 		$Content/VBoxContainer/HeightenedSep.add_theme_stylebox_override("separator", new_stylebox)
 		$Content/VBoxContainer/ParametersSep.add_theme_stylebox_override("separator", new_stylebox)
 		
+
+func set_description(value: String) -> void:
+	#var regex := RegEx.create_from_string("\n+")
+	#var regex_clean_lists := RegEx.create_from_string("\n*(\\[\\/{0,1}[ou]l\\])\n*")
+	#card_description = regex.sub(value, "\n", true)
+	#card_description = regex_clean_lists.sub(card_description, "$1", true)
+	card_description.replace("\nSuccess", "\n[b]Success:[/b]")
+	card_description.replace("\nCritical Success", "\n[b]Critical Success:[/b]")
+	card_description.replace("\nFailure", "\n[b]Failure:[/b]")
+	card_description.replace("\nCritical Failure", "\n[b]Critical Failure:[/b]")
 
 func _update_header() -> void:
 	const inset_height: float = 50.0
@@ -257,6 +268,9 @@ func _update_icons() -> void:
 	set_icons($IconManager/Description, icons, description, placeholder)
 	
 	if card_heightened:
+		heightened.show()
+		heightened_sep.show()
+		$IconManager/Heightened.show()
 		var heightened_array: Array[String] = []
 		for key in card_heightened.keys():
 			heightened_array.append("[b]" + key + ":[/b] " + card_heightened[key])
@@ -266,12 +280,10 @@ func _update_icons() -> void:
 		heightened.text = data["text"]
 		icons = data["icons"]
 		set_icons($IconManager/Heightened, icons, heightened, placeholder)
-		
-		heightened.show()
-		heightened_sep.show()
 	else:
 		heightened.hide()
 		heightened_sep.hide()
+		$IconManager/Heightened.hide()
 
 func _sort_traits(a, b) -> bool:
 	# true if a < b
@@ -298,7 +310,7 @@ func _update_content() -> void:
 	description.add_theme_font_override("normal_font", Globals.fonts_regular[0])
 	heightened.add_theme_font_override("bold_font", Globals.fonts_bold[0])
 	heightened.add_theme_font_override("normal_font", Globals.fonts_regular[0])
-	
+	set_description(card_description)
 	if card_traits:
 		card_traits.sort_custom(_sort_traits)
 		#var card_traits_colored: Array[String] = []
@@ -313,6 +325,7 @@ func _update_content() -> void:
 		traits.text = data["text"]
 		traits.show()
 		traits_sep.show()
+		$IconManager/Traits.show()
 		
 		await get_tree().process_frame
 		
@@ -321,6 +334,7 @@ func _update_content() -> void:
 	else:
 		traits.hide()
 		traits_sep.hide()
+		$IconManager/Traits.hide()
 		
 	_update_parameters()
 	await _update_icons()
@@ -378,10 +392,8 @@ func _update_content() -> void:
 @onready var paragraph: TextParagraph = TextParagraph.new()
 
 func set_icons(parent: Node, icons: Array, label: RichTextLabel, placeholder: String, reset: bool = true, separator: String = "") -> Array[TextureRect]:
-	#print("Setting icons!")
-	if reset:
-		for child in parent.get_children():
-			child.queue_free()
+	for child in parent.get_children():
+		child.queue_free()
 		
 	var rects: Array = await Globals.find_substring_screen_positions(label, placeholder)
 	var images: Array[TextureRect] = []
@@ -416,6 +428,7 @@ func _update_card_visuals() -> void:
 	if not is_ready:
 		return
 		
+	
 	_update_color()
 	_update_header()
 	_update_content()

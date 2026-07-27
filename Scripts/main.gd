@@ -60,11 +60,11 @@ func _digest_information(data: Array[String]) -> Array[String]:
 		for card in card_pairs[i]:
 			card._show()
 			await card.from_json_string(chewing[i])
-			await Globals.sleep(0.1)
+			await Globals.sleep(0.2)
 			await get_tree().process_frame
 			await get_tree().process_frame
 			await card._update_card_visuals()
-			await Globals.sleep(0.1)
+			await Globals.sleep(0.2)
 			await get_tree().process_frame
 			await get_tree().process_frame
 			await card._update_card_visuals()
