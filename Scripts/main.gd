@@ -31,6 +31,7 @@ func _save_front() -> void:
 	$CardBacks.hide()
 	$Cards.show()
 	$CuttingGuide.show()
+	$PageNum.text = "%d\n"%current_page
 	await RenderingServer.frame_post_draw
 	await get_tree().process_frame
 	save_to_image(save_prefix + "%s_front.png"%current_page, save_directory)
@@ -39,6 +40,7 @@ func _save_back() -> void:
 	$CardBacks.show()
 	$Cards.hide()
 	$CuttingGuide.hide()
+	$PageNum.text = "%d\n"%current_page
 	await RenderingServer.frame_post_draw
 	await get_tree().process_frame
 	await save_to_image(save_prefix + "%s_back.png"%current_page, save_directory)
@@ -79,9 +81,11 @@ func _parse_json(json: String) -> Array[String]:
 		print("ERROR: STRING NOT CORRECT.")
 		return plate
 		
-	list.sort_custom(func(a, b): a["card_type"] > b["card_type"])
+	list.sort_custom(func(a, b): return a.get("card_type", "") > b.get("card_type", ""))
 	for dict in list:
+		print(dict["card_type"], " ", dict["card_name"])
 		plate.append(JSON.stringify(dict))
+		
 		
 	return plate
 
@@ -120,6 +124,7 @@ func _hide_all_cards() -> void:
 
 func save_to_image(filename: String, directory: String = "user://") -> void:
 	$MarginContainer.hide()
+	$Buttons.hide()
 	await RenderingServer.frame_post_draw
 	await get_tree().process_frame
 	var capture = get_viewport().get_texture().get_image()
@@ -129,6 +134,7 @@ func save_to_image(filename: String, directory: String = "user://") -> void:
 	else:
 		push_error("Failed to save image. Error code: ", error)
 	$MarginContainer.show()
+	$Buttons.show()
 
 func build_card_front(data: Dictionary, card: CardFront) -> void:
 	card.card_name =         data.get("name",         default_front.card_name)

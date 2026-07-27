@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://ceyeaxop1qxbo" path="res://card_back.tscn" id="4_1bvp3"]
 [ext_resource type="PackedScene" uid="uid://0qlox30niu3x" path="res://card_editor.tscn" id="5_lquwl"]
 [ext_resource type="FontFile" uid="uid://c2hfq5m5hcvyo" path="res://Fonts/GoodPro/GoodPro-Bold.otf" id="6_7mycd"]
+[ext_resource type="FontFile" uid="uid://bbwe3wsrfylk" path="res://Fonts/FiraCode-Regular.ttf" id="7_272bh"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1bvp3"]
 
@@ -421,6 +422,23 @@ one_shot = true
 
 [node name="SaveBack" type="Timer" parent="." unique_id=851857018]
 one_shot = true
+
+[node name="PageNum" type="Label" parent="." unique_id=720521624]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -23.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("7_272bh")
+theme_override_font_sizes/font_size = 32
+text = "1
+
+"
+horizontal_alignment = 1
 
 [connection signal="popup_hide" from="PopupPanel" to="." method="_on_popup_panel_popup_hide"]
 [connection signal="pressed" from="PopupPanel/VBoxContainer/CloseButton" to="." method="_on_close_button_pressed"]
