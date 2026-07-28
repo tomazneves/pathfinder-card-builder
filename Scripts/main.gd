@@ -89,7 +89,6 @@ func _parse_json(json: String) -> Array[String]:
 		
 	return plate
 
-
 func _on_card_selected(card: CardFront) -> void:
 	if selected_card != null:
 		apply_changes(selected_card)
@@ -192,7 +191,7 @@ func _on_load_pressed() -> void:
 	#print(test_json)
 	plate = _parse_json(test_json)
 	print("\n\n\n\n\n")
-	
+	current_page = 1
 	if len(plate) > 0:
 		timer = $Digestion
 		$Digestion.start()

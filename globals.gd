@@ -1,6 +1,9 @@
 extends Node
 class_name GlobalClasses
 
+var is_processing_screenspace: bool = false
+
+
 enum ActivityCost {
 	ONE_ACTION,
 	TWO_ACTIONS,
@@ -68,6 +71,14 @@ var damage_types: Array[String] = [
 	"poison",
 	"force",
 	"mental"
+]
+const conditions: Array[String] = [
+	"blinded", "broken", "clumsy", "concealed", "confused", "controlled",
+	"dazzled", "deafened", "doomed", "drained", "dying", "encumbered",
+	"enfeebled", "fascinated", "fatigued", "fleeing", "frightened",
+	"grabbed", "hidden", "immobilized", "invisible", "off-guard",
+	"paralyzed", "petrified", "prone", "quickened", "restrained",
+	"sickened", "slowed", "stunned", "stupefied", "unconscious", "wounded",
 ]
 
 # Fonts
@@ -293,7 +304,14 @@ func color_content_pro(text: String, lookup: Dictionary, placeholder: String) ->
 
 func _ready() -> void:
 	trait_colors = load_json_file("res://Data/trait_colors.json")
+	
+	var test_text = """You send out a ray of colored light streaming toward your enemy, with a magical effect depending on the ray's color. Make a spell attack roll. If you hit, roll 1d4 to see which beam you cast. If the ray deals damage, that damage is doubled on a critical hit. Any additional traits that apply to a ray are listed in parentheses just after the name of the color.\n[ul]\nRed (fire) The ray deals 30 fire damage to the target.\nOrange (acid) The ray deals 40 acid damage to the target.\nYellow (electricity) The ray deals 50 electricity damage to the target.\nGreen (poison) The ray deals 25 poison damage to the target, and the target must succeed at a Fortitude save or be enfeebled 1 for 1 minute (enfeebled 2 on a critical failure).\n[/ul]"""
 
+	print(test_text)
+	
+	print("\t\t|\n\t\tV")
+	
+	print(color_text(test_text, "(XX)"))
 
 ## ------------------------------------------------------------------
 ## Returns the RichTextLabel's persistent CharPositionRecorder,
@@ -319,7 +337,7 @@ func _get_or_create_recorder(rtl: RichTextLabel) -> CharPositionRecorder:
 func _tokenize_bbcode(source: String) -> Array:
 	var tokens: Array = []
 	var regex := RegEx.new()
-	regex.compile("\\[[^\\]]*\\]")
+	regex.compile("\\[(?!/?[iI][mM][gG](?:[\\]=\\s]))[^\\]]+\\]")
 	var cursor := 0
 
 	for result in regex.search_all(source):
@@ -334,115 +352,236 @@ func _tokenize_bbcode(source: String) -> Array:
 		tokens.append({"is_tag": false, "text": source.substr(cursor)})
 
 	return tokens
+	
+	
+# =============================================================================
+# Formats raw Pathfinder 2e activity text into BBCode suitable for a
+# RichTextLabel (bbcode_enabled = true), highlighting:
+#   1. Traits            -> bold, UPPERCASE, color = Globals.trait_colors,
+#                            placeholder-prefixed, EXCEPT when the trait word
+#                            is actually part of a damage reference.
+#   2. Damage references  -> bold, color = Globals.damage_types. NOT
+#                            placeholder-prefixed (see note at bottom of file
+#                            if you want that behavior instead).
+#   3. Conditions         -> bold, color = Globals.TYPE_COLORS[CardType.DEBUFF],
+#                            placeholder-prefixed.
+#   4. Degree-of-success headers ("\nCritical Success", "\nFailure", ...)
+#                         -> bold, with a trailing semicolon.
+#
+# Returns a Dictionary:
+#   {
+#     "text":         the formatted BBCode string,
+#     "placeholders": the lowercase name of each trait/condition that
+#                      received a placeholder, IN THE ORDER the placeholders
+#                      occur in "text". Use this to walk the string
+#                      afterwards (e.g. String.find(placeholder_text, from))
+#                      and swap each occurrence for an icon, in order, one
+#                      name per hit.
+#   }
+# =============================================================================
 
+static func color_text(raw_text: String, placeholder_text: String) -> Dictionary:
+	var placeholder_names: Array = []
+	var all_matches: Array = []  # each entry: {start, end, priority, text, name?}
 
-func find_substring_screen_positions(rtl: RichTextLabel, substring: String) -> Array[Rect2]:
-	var results: Array[Rect2] = []
-	if substring.is_empty():
-		return results
+	# ---- small helpers ------------------------------------------------------
+	var escape_re := func(s: String) -> String:
+		var out := s
+		for ch in ["\\", "+", "*", "?", ".", "(", ")", "[", "]", "{", "}", "^", "$", "|"]:
+			out = out.replace(ch, "\\" + ch)
+		return out
 
-	var original_bbcode: String = rtl.text
-	var tokens: Array = _tokenize_bbcode(original_bbcode)
+	var build_alt := func(keys: Array) -> String:
+		var escaped: Array = []
+		for k in keys:
+			escaped.append(escape_re.call(k))
+		# Longest-first so a short key (e.g. "fire") can never swallow part
+		# of a longer one that happens to contain it.
+		escaped.sort_custom(func(a, b): return a.length() > b.length())
+		return "|".join(escaped)
 
-	# --- Build OUR OWN "virtual parsed text" from literal segments only. ---
-	# List bullets/numbers are synthesized by Godot at draw time and never
-	# exist in the raw source, so they simply can't appear here — no
-	# assumption about Godot's internal indexing is needed at all.
-	var virtual_text := ""
-	var char_segment_map: Array = []  # parallel to virtual_text: [seg_id, local_idx]
-	var rebuilt_bbcode := ""
-	var seg_id := 0
+	var overlaps_existing := func(s: int, e: int) -> bool:
+		for existing in all_matches:
+			if s < existing["end"] and e > existing["start"]:
+				return true
+		return false
 
-	for token in tokens:
-		if token["is_tag"]:
-			rebuilt_bbcode += token["text"]
-		else:
-			var text: String = token["text"]
-			if text.is_empty():
+	# =========================================================================
+	# 1. DAMAGE REFERENCES  (bold + color, NO placeholder)
+	# =========================================================================
+	var damage_alt: String = build_alt.call(Globals.damage_types)
+
+	if not damage_alt.is_empty():
+		# "2d6 fire damage" / "1 persistent bleed damage"
+		var dmg_re_typed := RegEx.new()
+		dmg_re_typed.compile(
+			"(?i)\\b(\\d+d\\d+(?:\\s*[+-]\\s*\\d+)?|\\d+)\\s+(persistent\\s+)?(" + damage_alt + ")\\s+damage\\b"
+		)
+		for m in dmg_re_typed.search_all(raw_text):
+			var type_name: String = m.get_string(3).to_lower()
+			var color: Color = Globals.trait_colors.get(type_name, Color.BLACK)
+			all_matches.append({
+				"start": m.get_start(), "end": m.get_end(), "priority": 3,
+				"text": placeholder_text + "[b][color=#%s]%s[/color][/b]" % [color.to_html(false), m.get_string()],
+				"name": type_name
+			})
+
+		# "cold damage increases by 1" / "damage increases by 1d6" (type optional)
+		var dmg_re_increase := RegEx.new()
+		dmg_re_increase.compile(
+			"(?i)\\b(?:(" + damage_alt + ")\\s+)?damage\\s+increases\\s+by\\s+(\\d+d\\d+(?:\\s*[+-]\\s*\\d+)?|\\d+)\\b"
+		)
+		for m in dmg_re_increase.search_all(raw_text):
+			var type_name2: String = m.get_string(1).to_lower()
+			var color2: Color = Globals.trait_colors.get(type_name2, Color.BLACK) if type_name2 != "" else Color.BLACK
+			all_matches.append({
+				"start": m.get_start(), "end": m.get_end(), "priority": 3,
+				"text": placeholder_text + "[b][color=#%s]%s[/color][/b]" % [color2.to_html(false), m.get_string()],
+				"name": type_name2,
+			})
+
+	# Plain "2d6 damage" with no type word at all. Not one of the spec's
+	# examples, but common in PF2e text -- delete this block if unwanted.
+	var dmg_re_untyped := RegEx.new()
+	dmg_re_untyped.compile("(?i)\\b(\\d+d\\d+(?:\\s*[+-]\\s*\\d+)?|\\d+)\\s+damage\\b")
+	for m in dmg_re_untyped.search_all(raw_text):
+		var s: int = m.get_start()
+		var e: int = m.get_end()
+		if overlaps_existing.call(s, e):
+			continue
+		var color3: Color = Globals.trait_colors.get("untyped", Color.BLACK)
+		all_matches.append({
+			"start": s, "end": e, "priority": 3,
+			"text": "[b][color=#%s]%s[/color][/b]" % [color3.to_html(false), m.get_string()],
+		})
+
+	# "Fast Healing 2" / "Healing 10" -- not phrased with the word "damage",
+	# but treated as a damage-type reference using Globals.damage_types["healing"].
+	var healing_re := RegEx.new()
+	healing_re.compile("(?i)\\b((?:fast\\s+)?healing)\\s+(\\d+)\\b")
+	for m in healing_re.search_all(raw_text):
+		var heal_color: Color = Globals.trait_colors.get("healing", Color.WHITE)
+		all_matches.append({
+			"start": m.get_start(), "end": m.get_end(), "priority": 3,
+			"text": placeholder_text + "[b][color=#%s]%s[/color][/b]" % [heal_color.to_html(false), m.get_string()],
+			"name": "healing"
+		})
+ 
+	# "restores 5 HP" / "gains 1d8 temporary HP" / "regaining 3 Hit Points" etc.
+	# -- "restores?"/"heals?"/"gains?"/"regains?" also pick up the bare
+	# "restore"/"heal"/"gain"/"regain" forms for free (plural-subject phrasing).
+	var hp_verbs := "restores?|restoring|heals?|healing|gains?|gaining|regains?|regaining"
+	var hp_gain_re := RegEx.new()
+	hp_gain_re.compile(
+		"(?i)\\b(?:" + hp_verbs + ")\\s+(\\d+d\\d+(?:\\s*[+-]\\s*\\d+)?|\\d+)\\s+(temporary\\s+)?(?:HP|hit\\s+points?)\\b"
+	)
+	for m in hp_gain_re.search_all(raw_text):
+		var is_temp: bool = m.get_string(2) != ""
+		var hp_type_key: String = "temp_hp" if is_temp else "healing"
+		var hp_color: Color = Globals.trait_colors.get(hp_type_key, Globals.TYPE_COLORS[Globals.CardType.BUFF])
+		all_matches.append({
+			"start": m.get_start(), "end": m.get_end(), "priority": 3,
+			"text": placeholder_text + "[b][color=#%s]%s[/color][/b]" % [hp_color.to_html(false), m.get_string()],
+			"name": hp_type_key
+		})
+
+	# =========================================================================
+	# 2. CONDITIONS  (bold + placeholder + DEBUFF color)
+	# =========================================================================
+	var cond_alt: String = build_alt.call(Globals.conditions)
+
+	if not cond_alt.is_empty():
+		var cond_re := RegEx.new()
+		cond_re.compile("(?i)\\b(" + cond_alt + ")\\b(\\s+increases\\s+by\\s+\\d+|\\s+\\d+)?")
+
+		var debuff_color: Color = Globals.TYPE_COLORS[Globals.CardType.DEBUFF]
+		for m in cond_re.search_all(raw_text):
+			var s2: int = m.get_start()
+			var e2: int = m.get_end()
+			if overlaps_existing.call(s2, e2):
 				continue
-			rebuilt_bbcode += "[reclocpos id=%d]%s[/reclocpos]" % [seg_id, text]
-			for local_idx in range(text.length()):
-				char_segment_map.append([seg_id, local_idx])
-			virtual_text += text
-			seg_id += 1
+			var cond_name: String = m.get_string(1).to_lower()
+			all_matches.append({
+				"start": s2, "end": e2, "priority": 2,
+				"text": placeholder_text + "[b][color=#%s]%s[/color][/b]" % [debuff_color.to_html(false), m.get_string()],
+				"name": cond_name,
+			})
 
-	# --- Locate matches against OUR OWN virtual text ---
-	var match_starts: Array[int] = []
-	var search_start := 0
-	while true:
-		var found := virtual_text.find(substring, search_start)
-		if found == -1:
-			break
-		match_starts.append(found)
-		search_start = found + 1
+	# =========================================================================
+	# 3. TRAITS  (bold + UPPERCASE + placeholder + color), skipped if the
+	#    matched word falls inside anything already claimed above (i.e. it's
+	#    actually part of a damage reference, or overlaps a condition)
+	# =========================================================================
+	var trait_alt: String = build_alt.call(Globals.trait_colors.keys())
 
-	if match_starts.is_empty():
-		return results
+	if not trait_alt.is_empty():
+		var trait_re := RegEx.new()
+		trait_re.compile("(?i)\\b(" + trait_alt + ")\\b")
 
-	# --- Install/reuse the recorder, draw with tagged segments, restore ---
-	var recorder := _get_or_create_recorder(rtl)
-	recorder.positions_by_segment.clear()
-
-	rtl.text = rebuilt_bbcode
-	rtl.queue_redraw()
-	await rtl.get_tree().process_frame
-	await rtl.get_tree().process_frame
-
-	rtl.text = original_bbcode
-
-	# --- Build Rect2s per matched occurrence, split by visual line ---
-	var canvas_xform: Transform2D = rtl.get_global_transform_with_canvas()
-	var font: Font = rtl.get_theme_font("normal_font")
-	var font_size: int = rtl.get_theme_font_size("normal_font_size")
-	var line_height: float = font.get_height(font_size) if font else 20.0
-
-	for start_index in match_starts:
-		var line_groups: Dictionary = {}
-		var ordered_ys: Array[float] = []
-
-		for i in range(substring.length()):
-			var map_idx := start_index + i
-			if map_idx >= char_segment_map.size():
+		for m in trait_re.search_all(raw_text):
+			var s3: int = m.get_start()
+			var e3: int = m.get_end()
+			if overlaps_existing.call(s3, e3):
 				continue
-			var seg: int = char_segment_map[map_idx][0]
-			var local_idx: int = char_segment_map[map_idx][1]
+			var trait_name: String = m.get_string(1).to_lower()
+			var t_color: Color = Globals.trait_colors[trait_name]
+			all_matches.append({
+				"start": s3, "end": e3, "priority": 1,
+				"text": placeholder_text + "[b][color=#%s]%s[/color][/b]" % [t_color.to_html(false), trait_name.to_upper()],
+				"name": trait_name,
+			})
 
-			if not recorder.positions_by_segment.has(seg):
-				continue
-			if not recorder.positions_by_segment[seg].has(local_idx):
-				continue
+	# =========================================================================
+	# 4. DEGREES OF SUCCESS  (bold, ends in ";")
+	# =========================================================================
+	var degree_re := RegEx.new()
+	degree_re.compile("(?m)^(Critical Success|Success|Critical Failure|Failure)\\b")
+	for m in degree_re.search_all(raw_text):
+		all_matches.append({
+			"start": m.get_start(), "end": m.get_end(), "priority": 0,
+			"text": "[b]%s;[/b]" % m.get_string(),
+		})
 
-			var pos: Vector2 = recorder.positions_by_segment[seg][local_idx]
-			var y_key := snappedf(pos.y, 0.01)
+	# =========================================================================
+	# Resolve overlaps (higher priority wins a tie at the same start) and
+	# assemble the final string left-to-right.
+	# =========================================================================
+	all_matches.sort_custom(func(a, b):
+		if a["start"] != b["start"]:
+			return a["start"] < b["start"]
+		return a["priority"] > b["priority"]
+	)
 
-			if not line_groups.has(y_key):
-				line_groups[y_key] = []
-				ordered_ys.append(y_key)
-			line_groups[y_key].append(pos.x)
+	var accepted: Array = []
+	var cursor := -1
+	for entry in all_matches:
+		if entry["start"] < cursor:
+			continue  # overlaps something already accepted; drop it
+		accepted.append(entry)
+		cursor = entry["end"]
 
-		ordered_ys.sort()
+	var out := ""
+	var pos := 0
+	for entry in accepted:
+		out += raw_text.substr(pos, entry["start"] - pos)
+		out += entry["text"]
+		pos = entry["end"]
+		if entry.has("name"):
+			placeholder_names.append(entry["name"])
+	out += raw_text.substr(pos)
 
-		for y_key in ordered_ys:
-			var xs: Array = line_groups[y_key]
-			xs.sort()
-			var left: float = xs[0]
-			var right: float = xs[xs.size() - 1]
+	return {
+		"text": out,
+		"icons": placeholder_names,
+	}
 
-			var last_map_idx: int = start_index + substring.length() - 1
-			if last_map_idx + 1 < char_segment_map.size():
-				var next_seg: int = char_segment_map[last_map_idx + 1][0]
-				var next_local: int = char_segment_map[last_map_idx + 1][1]
-				if recorder.positions_by_segment.has(next_seg) and recorder.positions_by_segment[next_seg].has(next_local):
-					var next_pos: Vector2 = recorder.positions_by_segment[next_seg][next_local]
-					if is_equal_approx(snappedf(next_pos.y, 0.01), y_key):
-						right = next_pos.x
 
-			if right <= left and font:
-				right = left + font.get_string_size("M", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-
-			var local_rect := Rect2(Vector2(left, y_key), Vector2(right - left, line_height))
-			var top_left: Vector2 = canvas_xform * local_rect.position
-			var bottom_right: Vector2 = canvas_xform * (local_rect.position + local_rect.size)
-			results.append(Rect2(top_left, bottom_right - top_left))
-
-	return results
+# -----------------------------------------------------------------------------
+# Want damage types to ALSO get a placeholder (e.g. a flame icon before
+# "fire damage")? In the two damage loops above, change the appended text to:
+#
+#   "text": placeholder_text + "[b][color=#%s]%s[/color][/b]" % [...],
+#   "name": type_name,
+#
+# and it'll behave exactly like traits/conditions do.
+# -----------------------------------------------------------------------------
